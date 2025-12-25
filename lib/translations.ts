@@ -16,7 +16,54 @@ export const translations = {
     admin: 'مدير',
     dashboard: 'لوحة التحكم',
     myProfile: 'ملفي الشخصي',
-    freeShipping: 'شحن مجاني',
+
+    // Navbar
+    brandName: 'ايمن بشير',
+    search: 'ابحث عن منتجات...',
+    login: 'تسجيل الدخول',
+    logout: 'تسجيل الخروج',
+
+    myOrders: 'طلباتي',
+    myAddresses: 'عناويني',
+
+    menu: 'القائمة',
+    settings: 'الإعدادات',
+    theme: 'المظهر',
+    language: 'اللغة',
+
+    // Top Banner
+    freeShipping: 'شحن مجاني للطلبات فوق 500 جنيه',
+    discount: 'خصم 20% على جميع المنتجات',
+
+    // Newsletter
+    newsletterTitle: 'اشتركي في نشرتنا الإخبارية',
+    newsletterDescription: 'احصلي على آخر العروض والمنتجات الجديدة',
+    emailPlaceholder: 'أدخلي بريدك الإلكتروني',
+    subscribe: 'اشترك',
+    subscribing: 'جاري الاشتراك...',
+    subscribeSuccess: 'تم الاشتراك بنجاح!',
+    subscribeError: 'حدث خطأ. حاول مرة أخرى',
+    privacyText: 'بالاشتراك، أنت توافق على',
+    privacyPolicy: 'سياسة الخصوصية',
+
+    // Services
+    freeShippingTitle: 'شحن مجاني',
+    freeShippingDesc: 'للطلبات فوق 500 جنيه',
+    easyReturnsTitle: 'إرجاع سهل',
+    easyReturnsDesc: 'خلال 14 يوم',
+    securePaymentTitle: 'دفع آمن',
+    securePaymentDesc: 'حماية كاملة للبيانات',
+    support247Title: 'دعم 24/7',
+    support247Desc: 'خدمة عملاء متميزة',
+
+    // Common
+    egp: 'جنيه',
+    loading: 'جاري التحميل...',
+    noResults: 'لا توجد نتائج',
+    viewAll: 'عرض الكل',
+    addToCart: 'أضف للسلة',
+    buyNow: 'اشتري الآن',
+    outOfStock: 'غير متوفر',
 
     // === كلمات الـ Navbar والملف الشخصي ===
 
@@ -25,7 +72,7 @@ export const translations = {
     memberSince: 'عضو منذ',
     editPhoto: 'تعديل الصورة',
     rating: 'التقييم',
-    myAddresses: 'عناويني',
+
     myWishlist: 'قائمة مفضلاتي',
     emptyWishlist: 'قائمة المفضلات فارغة حالياً',
     removedFromWishlistSuccess: 'تمت إزالة المنتج من المفضلة بنجاح',
@@ -46,15 +93,13 @@ export const translations = {
     cart: 'السلة',
     wishlist: 'المفضلة',
     account: 'حسابي',
-    login: 'تسجيل الدخول',
+
     signup: 'إنشاء حساب',
-    logout: 'تسجيل الخروج',
+
     categories: 'الأقسام',
-    brandName: 'أيمن بشير',
-    search: 'ابحث عن المنتجات...',
+
     searchProducts: 'ابحث عن المنتجات...',
-    loading: 'جاري التحميل...',
-    noResults: 'لا توجد نتائج',
+
     results: 'نتائج',
 
     // === إتمام الطلب (Checkout) ===
@@ -88,14 +133,14 @@ export const translations = {
     customerService: 'خدمة العملاء',
     trackOrder: 'تتبع طلبك',
     faq: 'الأسئلة الشائعة',
-    privacyPolicy: 'سياسة الخصوصية',
+
     termsConditions: 'الشروط والأحكام',
     returnPolicy: 'سياسة الاستبدال والاسترجاع',
     paymentMethods: 'طرق الدفع',
     phoneNumber: '01234567890',
     emailAddress: 'info@aymanbasher.com',
     enterEmail: 'أدخل بريدك الإلكتروني',
-    subscribe: 'اشترك الآن',
+
     copyright: '© 2024 أيمن بشير. جميع الحقوق محفوظة.',
     visa: 'فيزا',
     mastercard: 'ماستر كارد',
@@ -115,7 +160,7 @@ export const translations = {
     apply: 'تطبيق',
 
     // === الإعدادات (Settings) ===
-    settings: 'الإعدادات',
+
     save: 'حفظ التغييرات',
     newsletter: 'النشرة البريدية',
     subscribeNewsletter: 'الاشتراك في النشرة البريدية للحصول على العروض',
@@ -124,7 +169,7 @@ export const translations = {
     cairo: 'القاهرة',
 
     // === الطلبات ===
-    myOrders: 'طلباتي',
+
     orders: 'طلبات',
     orderNumber: 'رقم الطلب',
     viewDetails: 'عرض التفاصيل',
@@ -147,7 +192,7 @@ export const translations = {
     shoppingCart: 'سلة التسوق',
     orderSummary: 'ملخص الطلب',
     subtotal: 'المجموع الفرعي',
-    discount: 'الخصم',
+
     shipping: 'الشحن',
     total: 'الإجمالي',
     currency: 'جنيه',
@@ -195,8 +240,7 @@ export const translations = {
     reviews: 'تقييمات',
     description: 'الوصف',
     inStock: 'متوفر',
-    outOfStock: 'نفد من المخزن',
-    addToCart: 'أضف للسلة',
+
     easyReturns: 'إرجاع سهل خلال 14 يوم',
     qualityProducts: 'خامات عالية الجودة',
     quantity: 'الكمية',
@@ -243,12 +287,6 @@ export const translations = {
     invalidImageError: 'Please select a valid image',
     imageUploadSuccess: 'Image uploaded successfully! ✨',
 
-    home: 'Home',
-    shop: 'Shop',
-    abayas: 'Abayas',
-    hijabs: 'Hijabs',
-    dresses: 'Dresses',
-    sales: 'Sales',
     cart: 'Cart',
     wishlist: 'Wishlist',
     account: 'Account',
@@ -262,7 +300,8 @@ export const translations = {
     loading: 'Loading...',
     noResults: 'No results found',
     results: 'Results',
-    freeShipping: 'Free Shipping',
+
+    menu: 'Menu',
 
     checkout: 'Checkout',
     shippingAddress: 'Shipping Address',
@@ -288,20 +327,66 @@ export const translations = {
     fawry: 'Fawry',
     next: 'Next',
     previous: 'Previous',
+    // Navbar
+
+    settings: 'Settings',
+    theme: 'Theme',
+    language: 'Language',
+
+    // Top Banner
+    freeShipping: 'Free Shipping on Orders Over 500 EGP',
+    discount: '20% Off on All Products',
+
+    // Categories
+    home: 'Home',
+    shop: 'Shop',
+    abayas: 'Abayas',
+    hijabs: 'Hijabs',
+    dresses: 'Dresses',
+    sales: 'Sales',
+
+    // Newsletter
+    newsletterTitle: 'Subscribe to Our Newsletter',
+    newsletterDescription: 'Get the latest offers and new products',
+    emailPlaceholder: 'Enter your email',
+    subscribe: 'Subscribe',
+    subscribing: 'Subscribing...',
+    subscribeSuccess: 'Successfully subscribed!',
+    subscribeError: 'Error occurred. Try again',
+    privacyText: 'By subscribing, you agree to our',
+    privacyPolicy: 'Privacy Policy',
+
+    // Services
+    freeShippingTitle: 'Free Shipping',
+    freeShippingDesc: 'On Orders Over 500 EGP',
+    easyReturnsTitle: 'Easy Returns',
+    easyReturnsDesc: 'Within 14 Days',
+    securePaymentTitle: 'Secure Payment',
+    securePaymentDesc: 'Full Data Protection',
+    support247Title: '24/7 Support',
+    support247Desc: 'Outstanding Customer Service',
+
+    // Common
+    egp: 'EGP',
+
+    viewAll: 'View All',
+    addToCart: 'Add to Cart',
+    buyNow: 'Buy Now',
+    outOfStock: 'Out of Stock',
 
     aboutUs: 'About Us',
     quickLinks: 'Quick Links',
     customerService: 'Customer Service',
     trackOrder: 'Track Order',
     faq: 'FAQ',
-    privacyPolicy: 'Privacy Policy',
+
     termsConditions: 'Terms & Conditions',
     returnPolicy: 'Return Policy',
     paymentMethods: 'Payment Methods',
     phoneNumber: '01234567890',
     emailAddress: 'info@aymanbasher.com',
     enterEmail: 'Enter your email',
-    subscribe: 'Subscribe',
+
     copyright: '© 2024 Ayman Besher. All rights reserved.',
     visa: 'Visa',
     mastercard: 'Mastercard',
@@ -319,7 +404,6 @@ export const translations = {
     maxPrice: 'Max Price',
     apply: 'Apply',
 
-    settings: 'Settings',
     save: 'Save Changes',
     newsletter: 'Newsletter',
     subscribeNewsletter: 'Subscribe to newsletter for offers',
@@ -349,7 +433,7 @@ export const translations = {
     shoppingCart: 'Shopping Cart',
     orderSummary: 'Order Summary',
     subtotal: 'Subtotal',
-    discount: 'Discount',
+
     shipping: 'Shipping',
     total: 'Total',
     currency: 'EGP',
@@ -395,8 +479,7 @@ export const translations = {
     reviews: 'Reviews',
     description: 'Description',
     inStock: 'In Stock',
-    outOfStock: 'Out of Stock',
-    addToCart: 'Add to Cart',
+
     easyReturns: 'Easy 14-day returns',
     qualityProducts: 'High quality materials',
     quantity: 'Quantity',

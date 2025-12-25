@@ -62,7 +62,7 @@
 
   body {
     @apply bg-background text-foreground transition-colors duration-300;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 
   /* Typography improvements for readability */
@@ -71,21 +71,21 @@
   }
 
   /* Enhanced RTL/LTR support */
-  [dir="rtl"] {
+  [dir='rtl'] {
     direction: rtl;
   }
 
-  [dir="ltr"] {
+  [dir='ltr'] {
     direction: ltr;
     font-family: var(--font-inter), var(--font-cairo), sans-serif;
   }
 
   /* Icon flipping for RTL */
-  [dir="rtl"] .flip-rtl {
+  [dir='rtl'] .flip-rtl {
     transform: scaleX(-1);
   }
 
-  [dir="ltr"] .flip-ltr {
+  [dir='ltr'] .flip-ltr {
     transform: scaleX(1);
   }
 
@@ -210,5 +210,29 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+@media (max-width: 380px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* Custom breakpoint للشاشات الصغيرة */
+@layer utilities {
+  @media (min-width: 380px) {
+    .xs\:inline {
+      display: inline;
+    }
+  }
+}
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

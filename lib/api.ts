@@ -16,9 +16,7 @@ import type {
   Address,
 } from './types'
 
-// إعداد عنوان الـ API الأساسي
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
 interface ProductQueryParams {
   page?: number
@@ -33,7 +31,6 @@ interface ProductQueryParams {
   [key: string]: any
 }
 
-// إنشاء نسخة Axios
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -42,7 +39,7 @@ const api = axios.create({
   withCredentials: true,
 })
 
-// Request interceptor - إضافة التوكن لكل طلب
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
@@ -56,16 +53,14 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor - التعامل مع الأخطاء (مثل انتهاء صلاحية التوكن)
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
-      }
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   }
@@ -76,33 +71,20 @@ export const productsAPI = {
   getAll: async (params?: ProductQueryParams) => {
     const cleanParams: any = { ...params }
 
-    /**
-     * ✅ تعديل منطق السعر:
-     * نقوم بتحويل priceMin إلى price[gte] و priceMax إلى price[lte].
-     * الباك إيند (apiFeatures.js) سيتولى تحويل كلمة 'price' إلى 'finalPrice' 
-     * ليتم الفلترة على السعر الفعلي بعد الخصم.
-     */
-    if (cleanParams.priceMin !== undefined && cleanParams.priceMin !== null) {
+    // ✅ التعديل المطلوب ليعمل الفلتر مع السعر الجديد (finalPrice) في الباك إند
+    if (cleanParams.priceMin !== undefined) {
       cleanParams['price[gte]'] = cleanParams.priceMin
+      delete cleanParams.priceMin
     }
-    if (cleanParams.priceMax !== undefined && cleanParams.priceMax !== null) {
+    if (cleanParams.priceMax !== undefined) {
       cleanParams['price[lte]'] = cleanParams.priceMax
+      delete cleanParams.priceMax
     }
-
-    // حذف المفاتيح الزائدة قبل الإرسال
-    delete cleanParams.priceMin
-    delete cleanParams.priceMax
-
-    console.log('📡 Sending Request to API with params:', cleanParams)
 
     const response = await api.get<PaginatedResponse<Product>>('/products', {
       params: cleanParams,
-      // تأكد من أن Axios يرسل المصفوفات بصيغة: category=1&category=2
-      paramsSerializer: {
-        indexes: null 
-      }
+      paramsSerializer: { indexes: null } // لضمان إرسال المصفوفات بشكل صحيح
     })
-
     return response.data
   },
 
@@ -122,24 +104,16 @@ export const productsAPI = {
 // ==================== CATEGORIES API ====================
 export const categoriesAPI = {
   getAll: async () => {
-    const response = await api.get<{ results: number; data: Category[] }>(
-      '/categories'
-    )
+    const response = await api.get<{ results: number; data: Category[] }>('/categories')
     return response.data.data
   },
-
   getById: async (id: string) => {
     const response = await api.get<{ data: Category }>(`/categories/${id}`)
     return response.data.data
   },
-
   getSubCategories: async (categoryId?: string) => {
-    const url = categoryId
-      ? `/categories/${categoryId}/subcategories`
-      : '/subcategories'
-    const response = await api.get<{ results: number; data: SubCategory[] }>(
-      url
-    )
+    const url = categoryId ? `/categories/${categoryId}/subcategories` : '/subcategories'
+    const response = await api.get<{ results: number; data: SubCategory[] }>(url)
     return response.data.data
   },
 }
@@ -147,9 +121,7 @@ export const categoriesAPI = {
 // ==================== BRANDS API ====================
 export const brandsAPI = {
   getAll: async () => {
-    const response = await api.get<{ results: number; data: Brand[] }>(
-      '/brands'
-    )
+    const response = await api.get<{ results: number; data: Brand[] }>('/brands')
     return response.data.data
   },
 }
@@ -158,20 +130,14 @@ export const brandsAPI = {
 export const authAPI = {
   signup: async (data: any) => {
     const response = await api.post<AuthResponse>('/auth/signup', data)
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token)
-    }
+    if (response.data.token) localStorage.setItem('token', response.data.token)
     return response.data
   },
-
-  login: async (data: { email: string; password: string }) => {
+  login: async (data: any) => {
     const response = await api.post<AuthResponse>('/auth/login', data)
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token)
-    }
+    if (response.data.token) localStorage.setItem('token', response.data.token)
     return response.data
   },
-
   logout: () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
@@ -185,17 +151,19 @@ export const usersAPI = {
     const response = await api.get<{ status: number; data: User }>('/users/getMe')
     return response.data.data
   },
-
   updateMe: async (data: UpdateUserData) => {
     const response = await api.put<{ status: number; data: User }>('/users/updateMe', data)
     return response.data.data
   },
-
   changeMyPassword: async (data: ChangePasswordData) => {
     const response = await api.put<{ status: number; token: string; data: User }>('/users/changeMyPassword', data)
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token)
-    }
+    if (response.data.token) localStorage.setItem('token', response.data.token)
+    return response.data
+  },
+  deleteMe: async () => {
+    const response = await api.delete('/users/deleteMe')
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
     return response.data
   },
 }
@@ -204,28 +172,36 @@ export const usersAPI = {
 export const cartAPI = {
   get: async () => {
     const response = await api.get<{ data: Cart }>('/cart')
-    return response.data.data
+    const cart = response.data.data
+    // الـ Populate اليدوي إذا لزم الأمر كما في كودك القديم
+    if (cart?.cartItems?.length > 0 && typeof cart.cartItems[0].product === 'string') {
+        cart.cartItems = await Promise.all(cart.cartItems.map(async (item: any) => {
+            const prod = await productsAPI.getById(item.product)
+            return { ...item, product: prod }
+        }))
+    }
+    return cart
   },
-
-  addItem: async (data: { productId: string; color?: string; size?: string }) => {
-    const response = await api.post('/cart', data)
-    return response.data
+  addItem: async (data: any) => {
+    await api.post('/cart', data)
+    return cartAPI.get()
   },
-
   updateQuantity: async (itemId: string, quantity: number) => {
-    const response = await api.put(`/cart/${itemId}`, { quantity })
-    return response.data
+    await api.put(`/cart/${itemId}`, { quantity })
+    return cartAPI.get()
   },
-
   removeItem: async (itemId: string) => {
     const response = await api.delete(`/cart/${itemId}`)
     return response.data
   },
-
   clear: async () => {
     const response = await api.delete('/cart')
     return response.data
   },
+  applyCoupon: async (coupon: string) => {
+    await api.put('/cart/applyCoupon', { coupon })
+    return cartAPI.get()
+  }
 }
 
 // ==================== WISHLIST API ====================
@@ -234,15 +210,13 @@ export const wishlistAPI = {
     const response = await api.get<{ data: Product[] }>('/wishlist')
     return response.data.data || []
   },
-
   add: async (productId: string) => {
     const response = await api.post('/wishlist', { productId })
-    return response.data
+    return response.data.data
   },
-
   remove: async (productId: string) => {
     const response = await api.delete(`/wishlist/${productId}`)
-    return response.data
+    return response.data.data
   },
 }
 
@@ -252,32 +226,54 @@ export const ordersAPI = {
     const response = await api.post(`/orders/${cartId}`, { shippingAddress })
     return response.data
   },
-
   getUserOrders: async () => {
     const response = await api.get<{ data: any[] }>('/orders')
     return response.data.data || []
   },
-
+  getOrderById: async (id: string) => {
+    const response = await api.get(`/orders/${id}`)
+    return response.data.data
+  },
   getCheckoutSession: async (cartId: string, shippingAddress: any) => {
-    const response = await api.get(`/orders/checkout-session/${cartId}`, {
-      params: shippingAddress,
-    })
+    const response = await api.get(`/orders/checkout-session/${cartId}`, { params: shippingAddress })
     return response.data
   },
 }
 
-// ==================== ADDRESSES API ====================
+// ==================== REVIEWS API (إعادة التصدير الناقص) ====================
+export const reviewsAPI = {
+  create: async (data: any) => {
+    const response = await api.post('/reviews', data)
+    return response.data
+  },
+  update: async (id: string, data: any) => {
+    const response = await api.put(`/reviews/${id}`, data)
+    return response.data
+  },
+  delete: async (id: string) => {
+    const response = await api.delete(`/reviews/${id}`)
+    return response.data
+  },
+  getReviews: async (productId: string) => {
+    const response = await api.get<{ data: Review[] }>(`/products/${productId}/reviews`)
+    return response.data.data || []
+  },
+}
+
+// ==================== ADDRESSES API (إضافة Update الناقصة) ====================
 export const addressesAPI = {
   getAll: async () => {
     const response = await api.get<{ data: Address[] }>('/addresses')
     return response.data.data || []
   },
-
   add: async (address: any) => {
     const response = await api.post('/addresses', address)
     return response.data.data
   },
-
+  update: async (id: string, address: any) => {
+    const response = await api.put(`/addresses/${id}`, address)
+    return response.data.data
+  },
   delete: async (id: string) => {
     const response = await api.delete(`/addresses/${id}`)
     return response.data

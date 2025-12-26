@@ -1,16 +1,22 @@
-// ✅ lib/translations.ts - النسخة النهائية الشاملة 100%
+// lib/translations.ts
 export type TranslationKey = keyof typeof translations.en
 
 export const translations = {
   ar: {
+    // === Navbar الكلمات المفقودة ===
+    profile: 'الملف الشخصي',
+    orders: 'طلباتي',
+    addresses: 'عناويني',
+    adminPanel: 'لوحة الإدارة',
+
     // === كارت المنتج (ProductCard) ===
-    removeFromWishlist: 'إزالة من المفضلة', // ✅ المضاف حديثاً
+    removeFromWishlist: 'إزالة من المفضلة',
     addToWishlist: 'إضافة للمفضلة',
     removedFromWishlist: 'تمت الإزالة من المفضلة',
     addedToWishlist: 'تمت الإضافة إلى المفضلة',
     newArrivals: 'وصل حديثاً',
     addedToCart: 'تمت الإضافة إلى السلة',
-    allCategories: 'كل الأقسام', // ✅ تم الإضافة
+    allCategories: 'كل الأقسام',
 
     customer: 'عميل',
     admin: 'مدير',
@@ -22,10 +28,8 @@ export const translations = {
     search: 'ابحث عن منتجات...',
     login: 'تسجيل الدخول',
     logout: 'تسجيل الخروج',
-
     myOrders: 'طلباتي',
     myAddresses: 'عناويني',
-
     menu: 'القائمة',
     settings: 'الإعدادات',
     theme: 'المظهر',
@@ -35,55 +39,7 @@ export const translations = {
     freeShipping: 'شحن مجاني للطلبات فوق 500 جنيه',
     discount: 'خصم 20% على جميع المنتجات',
 
-    // Newsletter
-    newsletterTitle: 'اشتركي في نشرتنا الإخبارية',
-    newsletterDescription: 'احصلي على آخر العروض والمنتجات الجديدة',
-    emailPlaceholder: 'أدخلي بريدك الإلكتروني',
-    subscribe: 'اشترك',
-    subscribing: 'جاري الاشتراك...',
-    subscribeSuccess: 'تم الاشتراك بنجاح!',
-    subscribeError: 'حدث خطأ. حاول مرة أخرى',
-    privacyText: 'بالاشتراك، أنت توافق على',
-    privacyPolicy: 'سياسة الخصوصية',
-
-    // Services
-    freeShippingTitle: 'شحن مجاني',
-    freeShippingDesc: 'للطلبات فوق 500 جنيه',
-    easyReturnsTitle: 'إرجاع سهل',
-    easyReturnsDesc: 'خلال 14 يوم',
-    securePaymentTitle: 'دفع آمن',
-    securePaymentDesc: 'حماية كاملة للبيانات',
-    support247Title: 'دعم 24/7',
-    support247Desc: 'خدمة عملاء متميزة',
-
-    // Common
-    egp: 'جنيه',
-    loading: 'جاري التحميل...',
-    noResults: 'لا توجد نتائج',
-    viewAll: 'عرض الكل',
-    addToCart: 'أضف للسلة',
-    buyNow: 'اشتري الآن',
-    outOfStock: 'غير متوفر',
-
-    // === كلمات الـ Navbar والملف الشخصي ===
-
-    personalInfo: 'المعلومات الشخصية',
-    changePassword: 'تغيير كلمة المرور',
-    memberSince: 'عضو منذ',
-    editPhoto: 'تعديل الصورة',
-    rating: 'التقييم',
-
-    myWishlist: 'قائمة مفضلاتي',
-    emptyWishlist: 'قائمة المفضلات فارغة حالياً',
-    removedFromWishlistSuccess: 'تمت إزالة المنتج من المفضلة بنجاح',
-    continueShpping: 'متابعة التسوق',
-    pleaseLogin: 'الرجاء تسجيل الدخول',
-    notDefined: 'غير محدد',
-    imageSizeError: 'حجم الصورة يجب أن يكون أقل من 5 ميجابايت',
-    invalidImageError: 'يرجى اختيار صورة صالحة',
-    imageUploadSuccess: 'تم تحميل الصورة بنجاح! ✨',
-
-    // === التنقل والقوائم ===
+    // Navigation
     home: 'الرئيسية',
     shop: 'المتجر',
     abayas: 'عباءات',
@@ -94,15 +50,25 @@ export const translations = {
     wishlist: 'المفضلة',
     account: 'حسابي',
 
+    // ... بقية الترجمات كما هي
+    personalInfo: 'المعلومات الشخصية',
+    changePassword: 'تغيير كلمة المرور',
+    memberSince: 'عضو منذ',
+    editPhoto: 'تعديل الصورة',
+    rating: 'التقييم',
+    myWishlist: 'قائمة مفضلاتي',
+    emptyWishlist: 'قائمة المفضلات فارغة حالياً',
+    removedFromWishlistSuccess: 'تمت إزالة المنتج من المفضلة بنجاح',
+    continueShpping: 'متابعة التسوق',
+    pleaseLogin: 'الرجاء تسجيل الدخول',
+    notDefined: 'غير محدد',
+    imageSizeError: 'حجم الصورة يجب أن يكون أقل من 5 ميجابايت',
+    invalidImageError: 'يرجى اختيار صورة صالحة',
+    imageUploadSuccess: 'تم تحميل الصورة بنجاح! ✨',
     signup: 'إنشاء حساب',
-
     categories: 'الأقسام',
-
     searchProducts: 'ابحث عن المنتجات...',
-
     results: 'نتائج',
-
-    // === إتمام الطلب (Checkout) ===
     checkout: 'إتمام الطلب',
     shippingAddress: 'عنوان الشحن',
     paymentMethod: 'طريقة الدفع',
@@ -126,27 +92,21 @@ export const translations = {
     fawry: 'فوري',
     next: 'التالي',
     previous: 'السابق',
-
-    // === التذييل (Footer) ===
     aboutUs: 'من نحن',
     quickLinks: 'روابط سريعة',
     customerService: 'خدمة العملاء',
     trackOrder: 'تتبع طلبك',
     faq: 'الأسئلة الشائعة',
-
     termsConditions: 'الشروط والأحكام',
     returnPolicy: 'سياسة الاستبدال والاسترجاع',
     paymentMethods: 'طرق الدفع',
     phoneNumber: '01234567890',
     emailAddress: 'info@aymanbasher.com',
     enterEmail: 'أدخل بريدك الإلكتروني',
-
     copyright: '© 2024 أيمن بشير. جميع الحقوق محفوظة.',
     visa: 'فيزا',
     mastercard: 'ماستر كارد',
     paypal: 'بايبال',
-
-    // === المتجر والترتيب ===
     sortBy: 'ترتيب حسب',
     newest: 'الأحدث',
     bestSellers: 'الأكثر مبيعاً',
@@ -158,19 +118,12 @@ export const translations = {
     minPrice: 'أقل سعر',
     maxPrice: 'أعلى سعر',
     apply: 'تطبيق',
-
-    // === الإعدادات (Settings) ===
-
     save: 'حفظ التغييرات',
     newsletter: 'النشرة البريدية',
     subscribeNewsletter: 'الاشتراك في النشرة البريدية للحصول على العروض',
     securePayments: 'المدفوعات الآمنة',
     orderStatus: 'تحديثات حالة الطلب',
     cairo: 'القاهرة',
-
-    // === الطلبات ===
-
-    orders: 'طلبات',
     orderNumber: 'رقم الطلب',
     viewDetails: 'عرض التفاصيل',
     download: 'تحميل الفاتورة',
@@ -187,12 +140,9 @@ export const translations = {
     shippingDelivery: 'الشحن والتوصيل',
     fastDelivery: 'توصيل سريع',
     viewOrderDetails: 'عرض تفاصيل الطلب',
-
-    // === سلة التسوق والكوبونات ===
     shoppingCart: 'سلة التسوق',
     orderSummary: 'ملخص الطلب',
     subtotal: 'المجموع الفرعي',
-
     shipping: 'الشحن',
     total: 'الإجمالي',
     currency: 'جنيه',
@@ -209,8 +159,6 @@ export const translations = {
     color: 'اللون',
     size: 'المقاس',
     remove: 'إزالة',
-
-    // === تسجيل الدخول وإنشاء الحساب ===
     fullName: 'الاسم الكامل',
     email: 'البريد الإلكتروني',
     password: 'كلمة المرور',
@@ -235,18 +183,13 @@ export const translations = {
     terms: 'الشروط والأحكام',
     and: 'و',
     privacy: 'سياسة الخصوصية',
-
-    // === صفحة المنتج ===
     reviews: 'تقييمات',
     description: 'الوصف',
     inStock: 'متوفر',
-
     easyReturns: 'إرجاع سهل خلال 14 يوم',
     qualityProducts: 'خامات عالية الجودة',
     quantity: 'الكمية',
     relatedProducts: 'منتجات ذات صلة',
-
-    // === أخرى ===
     edit: 'تعديل',
     success: 'تم بنجاح',
     error: 'خطأ',
@@ -255,22 +198,50 @@ export const translations = {
     thankYou: 'شكراً لك',
     backToShop: 'العودة للمتجر',
     needHelp: 'هل تحتاج مساعدة؟',
+    newsletterTitle: 'اشتركي في نشرتنا الإخبارية',
+    newsletterDescription: 'احصلي على آخر العروض والمنتجات الجديدة',
+    emailPlaceholder: 'أدخلي بريدك الإلكتروني',
+    subscribe: 'اشترك',
+    subscribing: 'جاري الاشتراك...',
+    subscribeSuccess: 'تم الاشتراك بنجاح!',
+    subscribeError: 'حدث خطأ. حاول مرة أخرى',
+    privacyText: 'بالاشتراك، أنت توافق على',
+    privacyPolicy: 'سياسة الخصوصية',
+    freeShippingTitle: 'شحن مجاني',
+    freeShippingDesc: 'للطلبات فوق 500 جنيه',
+    easyReturnsTitle: 'إرجاع سهل',
+    easyReturnsDesc: 'خلال 14 يوم',
+    securePaymentTitle: 'دفع آمن',
+    securePaymentDesc: 'حماية كاملة للبيانات',
+    support247Title: 'دعم 24/7',
+    support247Desc: 'خدمة عملاء متميزة',
+    egp: 'جنيه',
+    loading: 'جاري التحميل...',
+    noResults: 'لا توجد نتائج',
+    viewAll: 'عرض الكل',
+    addToCart: 'أضف للسلة',
+    buyNow: 'اشتري الآن',
+    outOfStock: 'غير متوفر',
   },
 
   en: {
-    removeFromWishlist: 'Remove from wishlist', // ✅ Added
+    // === Navbar Missing Words ===
+    profile: 'Profile',
+    orders: 'My Orders',
+    addresses: 'My Addresses',
+    adminPanel: 'Admin Panel',
+
+    removeFromWishlist: 'Remove from wishlist',
     addToWishlist: 'Add to wishlist',
     removedFromWishlist: 'Removed from wishlist',
     addedToWishlist: 'Added to wishlist',
     newArrivals: 'New Arrivals',
     addedToCart: 'Added to cart',
     allCategories: 'All Categories',
-
     customer: 'Customer',
     admin: 'Admin',
     dashboard: 'Dashboard',
     myProfile: 'My Profile',
-
     personalInfo: 'Personal Information',
     changePassword: 'Change Password',
     memberSince: 'Member since',
@@ -286,7 +257,6 @@ export const translations = {
     imageSizeError: 'Image size must be less than 5MB',
     invalidImageError: 'Please select a valid image',
     imageUploadSuccess: 'Image uploaded successfully! ✨',
-
     cart: 'Cart',
     wishlist: 'Wishlist',
     account: 'Account',
@@ -300,9 +270,7 @@ export const translations = {
     loading: 'Loading...',
     noResults: 'No results found',
     results: 'Results',
-
     menu: 'Menu',
-
     checkout: 'Checkout',
     shippingAddress: 'Shipping Address',
     paymentMethod: 'Payment Method',
@@ -327,25 +295,17 @@ export const translations = {
     fawry: 'Fawry',
     next: 'Next',
     previous: 'Previous',
-    // Navbar
-
     settings: 'Settings',
     theme: 'Theme',
     language: 'Language',
-
-    // Top Banner
     freeShipping: 'Free Shipping on Orders Over 500 EGP',
     discount: '20% Off on All Products',
-
-    // Categories
     home: 'Home',
     shop: 'Shop',
     abayas: 'Abayas',
     hijabs: 'Hijabs',
     dresses: 'Dresses',
     sales: 'Sales',
-
-    // Newsletter
     newsletterTitle: 'Subscribe to Our Newsletter',
     newsletterDescription: 'Get the latest offers and new products',
     emailPlaceholder: 'Enter your email',
@@ -355,8 +315,6 @@ export const translations = {
     subscribeError: 'Error occurred. Try again',
     privacyText: 'By subscribing, you agree to our',
     privacyPolicy: 'Privacy Policy',
-
-    // Services
     freeShippingTitle: 'Free Shipping',
     freeShippingDesc: 'On Orders Over 500 EGP',
     easyReturnsTitle: 'Easy Returns',
@@ -365,33 +323,26 @@ export const translations = {
     securePaymentDesc: 'Full Data Protection',
     support247Title: '24/7 Support',
     support247Desc: 'Outstanding Customer Service',
-
-    // Common
     egp: 'EGP',
-
     viewAll: 'View All',
     addToCart: 'Add to Cart',
     buyNow: 'Buy Now',
     outOfStock: 'Out of Stock',
-
     aboutUs: 'About Us',
     quickLinks: 'Quick Links',
     customerService: 'Customer Service',
     trackOrder: 'Track Order',
     faq: 'FAQ',
-
     termsConditions: 'Terms & Conditions',
     returnPolicy: 'Return Policy',
     paymentMethods: 'Payment Methods',
     phoneNumber: '01234567890',
     emailAddress: 'info@aymanbasher.com',
     enterEmail: 'Enter your email',
-
     copyright: '© 2024 Ayman Besher. All rights reserved.',
     visa: 'Visa',
     mastercard: 'Mastercard',
     paypal: 'PayPal',
-
     sortBy: 'Sort by',
     newest: 'Newest',
     bestSellers: 'Best Sellers',
@@ -403,16 +354,13 @@ export const translations = {
     minPrice: 'Min Price',
     maxPrice: 'Max Price',
     apply: 'Apply',
-
     save: 'Save Changes',
     newsletter: 'Newsletter',
     subscribeNewsletter: 'Subscribe to newsletter for offers',
     securePayments: 'Secure Payments',
     orderStatus: 'Order Status Updates',
     cairo: 'Cairo',
-
     myOrders: 'My Orders',
-    orders: 'Orders',
     orderNumber: 'Order Number',
     viewDetails: 'View Details',
     download: 'Download Invoice',
@@ -429,11 +377,9 @@ export const translations = {
     shippingDelivery: 'Shipping & Delivery',
     fastDelivery: 'Fast Delivery',
     viewOrderDetails: 'View Order Details',
-
     shoppingCart: 'Shopping Cart',
     orderSummary: 'Order Summary',
     subtotal: 'Subtotal',
-
     shipping: 'Shipping',
     total: 'Total',
     currency: 'EGP',
@@ -450,7 +396,6 @@ export const translations = {
     color: 'Color',
     size: 'Size',
     remove: 'Remove',
-
     fullName: 'Full Name',
     email: 'Email Address',
     password: 'Password',
@@ -475,16 +420,13 @@ export const translations = {
     terms: 'Terms & Conditions',
     and: 'and',
     privacy: 'Privacy Policy',
-
     reviews: 'Reviews',
     description: 'Description',
     inStock: 'In Stock',
-
     easyReturns: 'Easy 14-day returns',
     qualityProducts: 'High quality materials',
     quantity: 'Quantity',
     relatedProducts: 'Related Products',
-
     edit: 'Edit',
     success: 'Success',
     error: 'Error',
@@ -495,4 +437,3 @@ export const translations = {
     needHelp: 'Need help?',
   },
 }
-// ترجمه

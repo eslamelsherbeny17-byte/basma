@@ -15,7 +15,6 @@ export default function HomePage() {
       <HeroSlider />
 
       {/* 2. Services - الخدمات */}
-      <ServicesSection />
 
       <Separator className='my-0' />
 
@@ -37,7 +36,7 @@ export default function HomePage() {
       <NewArrivals />
 
       {/* 7. Newsletter - النشرة الإخبارية */}
-      <NewsletterSection />
+      <ServicesSection />
     </>
   )
 }

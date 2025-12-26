@@ -16,25 +16,24 @@ import type {
   Address,
 } from './types'
 
-// 👇 استخدام Environment Variable
+// إعداد عنوان الـ API الأساسي
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
-console.log(' API_BASE_URLl', process.env.NEXT_PUBLIC_API_URL)
 
 interface ProductQueryParams {
   page?: number
   limit?: number
   sort?: string
-  category?: string
+  category?: string | string[]
   subcategory?: string
-  brand?: string
+  brand?: string | string[]
   priceMin?: number
   priceMax?: number
   keyword?: string
   [key: string]: any
 }
 
-// Create axios instance
+// إنشاء نسخة Axios
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -43,7 +42,7 @@ const api = axios.create({
   withCredentials: true,
 })
 
-// Request interceptor - Add token
+// Request interceptor - إضافة التوكن لكل طلب
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
@@ -54,12 +53,10 @@ api.interceptors.request.use(
     }
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
-// Response interceptor - Handle errors
+// Response interceptor - التعامل مع الأخطاء (مثل انتهاء صلاحية التوكن)
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
@@ -77,13 +74,35 @@ api.interceptors.response.use(
 // ==================== PRODUCTS API ====================
 export const productsAPI = {
   getAll: async (params?: ProductQueryParams) => {
+    const cleanParams: any = { ...params }
+
+    /**
+     * ✅ تعديل منطق السعر:
+     * نقوم بتحويل priceMin إلى price[gte] و priceMax إلى price[lte].
+     * الباك إيند (apiFeatures.js) سيتولى تحويل كلمة 'price' إلى 'finalPrice' 
+     * ليتم الفلترة على السعر الفعلي بعد الخصم.
+     */
+    if (cleanParams.priceMin !== undefined && cleanParams.priceMin !== null) {
+      cleanParams['price[gte]'] = cleanParams.priceMin
+    }
+    if (cleanParams.priceMax !== undefined && cleanParams.priceMax !== null) {
+      cleanParams['price[lte]'] = cleanParams.priceMax
+    }
+
+    // حذف المفاتيح الزائدة قبل الإرسال
+    delete cleanParams.priceMin
+    delete cleanParams.priceMax
+
+    console.log('📡 Sending Request to API with params:', cleanParams)
+
     const response = await api.get<PaginatedResponse<Product>>('/products', {
-      params: {
-        ...params,
-        'price[gte]': params?.priceMin,
-        'price[lte]': params?.priceMax,
-      },
+      params: cleanParams,
+      // تأكد من أن Axios يرسل المصفوفات بصيغة: category=1&category=2
+      paramsSerializer: {
+        indexes: null 
+      }
     })
+
     return response.data
   },
 
@@ -137,13 +156,7 @@ export const brandsAPI = {
 
 // ==================== AUTH API ====================
 export const authAPI = {
-  signup: async (data: {
-    name: string
-    email: string
-    password: string
-    passwordConfirm: string
-    phone?: string
-  }) => {
+  signup: async (data: any) => {
     const response = await api.post<AuthResponse>('/auth/signup', data)
     if (response.data.token) {
       localStorage.setItem('token', response.data.token)
@@ -169,38 +182,20 @@ export const authAPI = {
 // ==================== USERS API ====================
 export const usersAPI = {
   getMe: async () => {
-    const response = await api.get<{ status: number; data: User }>(
-      '/users/getMe'
-    )
+    const response = await api.get<{ status: number; data: User }>('/users/getMe')
     return response.data.data
   },
 
   updateMe: async (data: UpdateUserData) => {
-    const response = await api.put<{ status: number; data: User }>(
-      '/users/updateMe',
-      data
-    )
+    const response = await api.put<{ status: number; data: User }>('/users/updateMe', data)
     return response.data.data
   },
 
   changeMyPassword: async (data: ChangePasswordData) => {
-    const response = await api.put<{
-      status: number
-      token: string
-      data: User
-    }>('/users/changeMyPassword', data)
-
+    const response = await api.put<{ status: number; token: string; data: User }>('/users/changeMyPassword', data)
     if (response.data.token) {
       localStorage.setItem('token', response.data.token)
     }
-
-    return response.data
-  },
-
-  deleteMe: async () => {
-    const response = await api.delete('/users/deleteMe')
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
     return response.data
   },
 }
@@ -208,346 +203,85 @@ export const usersAPI = {
 // ==================== CART API ====================
 export const cartAPI = {
   get: async () => {
-    try {
-      const response = await api.get<{
-        status: number
-        message: string
-        numOfCartItems: number
-        data: Cart
-      }>('/cart')
-
-      const cart = response.data.data
-
-      if (cart.cartItems && cart.cartItems.length > 0) {
-        const firstItem = cart.cartItems[0]
-
-        if (typeof firstItem.product === 'string') {
-          const populatedItems = await Promise.all(
-            cart.cartItems.map(async (item): Promise<CartItem> => {
-              try {
-                if (typeof item.product === 'string') {
-                  const productResponse = await api.get<{ data: Product }>(
-                    `/products/${item.product}`
-                  )
-                  return {
-                    ...item,
-                    product: productResponse.data.data,
-                  } as CartItem
-                }
-                return item as CartItem
-              } catch (error) {
-                return item as CartItem
-              }
-            })
-          )
-
-          cart.cartItems = populatedItems
-        }
-      }
-
-      return cart
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.get<{ data: Cart }>('/cart')
+    return response.data.data
   },
 
-  addItem: async (data: {
-    productId: string
-    color?: string
-    size?: string
-  }) => {
-    try {
-      const response = await api.post<{
-        status: number
-        message: string
-        numOfCartItems: number
-        data: Cart
-      }>('/cart', data)
-
-      return await cartAPI.get()
-    } catch (error: any) {
-      throw error
-    }
+  addItem: async (data: { productId: string; color?: string; size?: string }) => {
+    const response = await api.post('/cart', data)
+    return response.data
   },
 
   updateQuantity: async (itemId: string, quantity: number) => {
-    try {
-      await api.put<{
-        status: number
-        message: string
-        numOfCartItems: number
-        data: Cart
-      }>(`/cart/${itemId}`, { quantity })
-
-      return await cartAPI.get()
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.put(`/cart/${itemId}`, { quantity })
+    return response.data
   },
 
   removeItem: async (itemId: string) => {
-    try {
-      const response = await api.delete(`/cart/${itemId}`)
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.delete(`/cart/${itemId}`)
+    return response.data
   },
 
   clear: async () => {
-    try {
-      const response = await api.delete('/cart')
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
-  },
-
-  applyCoupon: async (coupon: string) => {
-    try {
-      await api.put<{
-        status: number
-        message: string
-        data: Cart
-      }>('/cart/applyCoupon', { coupon })
-
-      return await cartAPI.get()
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.delete('/cart')
+    return response.data
   },
 }
 
 // ==================== WISHLIST API ====================
 export const wishlistAPI = {
   get: async () => {
-    try {
-      const response = await api.get<{
-        status: number
-        results: number
-        data: Product[]
-      }>('/wishlist')
-
-      return response.data.data || []
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return []
-      }
-      throw error
-    }
+    const response = await api.get<{ data: Product[] }>('/wishlist')
+    return response.data.data || []
   },
 
   add: async (productId: string) => {
-    try {
-      const response = await api.post<{
-        status: number
-        message: string
-        data: Product[]
-      }>('/wishlist', { productId })
-
-      return response.data.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.post('/wishlist', { productId })
+    return response.data
   },
 
   remove: async (productId: string) => {
-    try {
-      const response = await api.delete<{
-        status: number
-        message: string
-        data: Product[]
-      }>(`/wishlist/${productId}`)
-
-      return response.data.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.delete(`/wishlist/${productId}`)
+    return response.data
   },
 }
 
 // ==================== ORDERS API ====================
 export const ordersAPI = {
-  createCashOrder: async (
-    cartId: string,
-    shippingAddress: {
-      details: string
-      phone: string
-      city: string
-      postalCode: string
-    }
-  ) => {
-    try {
-      const response = await api.post(`/orders/${cartId}`, {
-        shippingAddress,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+  createCashOrder: async (cartId: string, shippingAddress: any) => {
+    const response = await api.post(`/orders/${cartId}`, { shippingAddress })
+    return response.data
   },
 
   getUserOrders: async () => {
-    try {
-      const response = await api.get<{
-        status: number
-        message: string
-        results: number
-        paginationResult: any
-        data: any[]
-      }>('/orders')
-
-      return response.data.data || []
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return []
-      }
-      throw error
-    }
+    const response = await api.get<{ data: any[] }>('/orders')
+    return response.data.data || []
   },
 
-  getOrderById: async (id: string) => {
-    try {
-      const response = await api.get(`/orders/${id}`)
-      return response.data.data
-    } catch (error: any) {
-      throw error
-    }
-  },
-
-  getCheckoutSession: async (
-    cartId: string,
-    shippingAddress: {
-      details: string
-      phone: string
-      city: string
-      postalCode: string
-    }
-  ) => {
-    try {
-      const response = await api.get(`/orders/checkout-session/${cartId}`, {
-        params: shippingAddress,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
-  },
-}
-
-// ==================== REVIEWS API ====================
-export const reviewsAPI = {
-  create: async (data: {
-    title?: string
-    ratings: number
-    product: string
-  }) => {
-    try {
-      const response = await api.post('/reviews', data)
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
-  },
-
-  update: async (id: string, data: { title?: string; ratings?: number }) => {
-    const response = await api.put(`/reviews/${id}`, data)
+  getCheckoutSession: async (cartId: string, shippingAddress: any) => {
+    const response = await api.get(`/orders/checkout-session/${cartId}`, {
+      params: shippingAddress,
+    })
     return response.data
-  },
-
-  delete: async (id: string) => {
-    const response = await api.delete(`/reviews/${id}`)
-    return response.data
-  },
-
-  getReviews: async (productId: string) => {
-    try {
-      const response = await api.get<{ results: number; data: Review[] }>(
-        `/products/${productId}/reviews`
-      )
-      return response.data.data || []
-    } catch (error) {
-      return []
-    }
   },
 }
 
 // ==================== ADDRESSES API ====================
 export const addressesAPI = {
   getAll: async () => {
-    try {
-      const response = await api.get<{
-        status: string
-        results: number
-        data: Address[]
-      }>('/addresses')
-
-      return response.data.data || []
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return []
-      }
-      throw error
-    }
+    const response = await api.get<{ data: Address[] }>('/addresses')
+    return response.data.data || []
   },
 
-  add: async (address: {
-    alias: string
-    details: string
-    phone: string
-    city: string
-    postalCode?: string
-  }) => {
-    try {
-      const response = await api.post<{
-        status: string
-        message: string
-        data: Address
-      }>('/addresses', address)
-
-      return response.data.data
-    } catch (error: any) {
-      throw error
-    }
-  },
-
-  update: async (
-    id: string,
-    address: {
-      alias: string
-      details: string
-      phone: string
-      city: string
-      postalCode?: string
-    }
-  ) => {
-    try {
-      const response = await api.put<{
-        status: string
-        message: string
-        data: Address
-      }>(`/addresses/${id}`, address)
-
-      return response.data.data
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.errors?.[0]?.msg ||
-        error.message ||
-        'فشل تحديث العنوان'
-
-      throw new Error(errorMessage)
-    }
+  add: async (address: any) => {
+    const response = await api.post('/addresses', address)
+    return response.data.data
   },
 
   delete: async (id: string) => {
-    try {
-      const response = await api.delete(`/addresses/${id}`)
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.delete(`/addresses/${id}`)
+    return response.data
   },
 }
 
-export default api
+export default api;

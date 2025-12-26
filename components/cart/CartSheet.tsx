@@ -15,6 +15,7 @@ import {
   Zap,
   CheckCircle2,
   AlertCircle,
+  X, // أضف هذا
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -100,7 +101,10 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side='left'
-        className='w-full sm:max-w-lg p-0 flex flex-col bg-background border-r-0'
+        className='w-[60vw] sm:max-w-lg p-0 flex flex-col bg-background border-r-0 [&>button]:hidden'
+        // ☝️ التغييرات:
+        // - w-[90vw] بدلاً من w-full لترك مساحة للإغلاق بالضغط خارج السلة
+        // - [&>button]:hidden لإخفاء زر الإغلاق الافتراضي من SheetContent
       >
         {/* ==================== HEADER ==================== */}
         <SheetHeader className='sticky top-0 z-10 p-6 pb-4 bg-background/80 backdrop-blur-xl border-b border-border shadow-sm'>
@@ -143,17 +147,15 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
               </div>
             </div>
 
-            {itemsCount > 0 && (
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', delay: 0.1 }}
-              >
-                <Badge className='bg-gradient-to-r from-primary to-accent text-white border-0 text-sm font-bold px-3 py-1 shadow-lg'>
-                  {formatPrice(total)}
-                </Badge>
-              </motion.div>
-            )}
+            {/* ✅ زر الإغلاق الوحيد - في الهيدر */}
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={() => onOpenChange(false)}
+              className='h-10 w-10 rounded-full hover:bg-muted'
+            >
+              <X className='h-5 w-5' />
+            </Button>
           </SheetTitle>
 
           {itemsCount > 0 && amountToFreeShipping > 0 && (
@@ -414,11 +416,11 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                             </div>
                           </div>
 
-                          {/* تم تغيير التموضع هنا من left-2 إلى right-2 */}
+                          {/* ✅ زر الحذف - في الزاوية اليمنى */}
                           <Button
                             size='icon'
                             variant='ghost'
-                            className='absolute top-2 right-2 text-muted-foreground hover:text-destructive'
+                            className='absolute top-2 right-2 h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full'
                             onClick={() => handleRemoveItem(item._id)}
                             disabled={isRemoving}
                           >

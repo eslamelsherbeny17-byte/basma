@@ -109,29 +109,33 @@ export default function HeroSlider() {
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
 
-            {/* ✅ التعديل هنا: إضافة md:px-32 و lg:px-48 لخلق مساحة آمنة بعيدة عن الأسهم */}
-            <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-20 md:px-32 lg:px-48 pb-24 sm:pb-32 text-white">
-              <div className="max-w-4xl space-y-4 rtl:text-right ltr:text-left">
+            {/* ✅ التعديل الجوهري هنا:
+                - px-6: مسافة صغيرة جداً للموبايل عشان الكلام يملأ العرض.
+                - md:px-32: المسافة الآمنة بتظهر بس في الكمبيوتر.
+                - pb-24: الحفاظ على مسافة من الأسفل عشان النقط (Dots).
+            */}
+            <div className="absolute inset-0 flex flex-col justify-end px-6 md:px-32 lg:px-48 pb-24 sm:pb-32 text-white">
+              <div className="max-w-4xl space-y-3 sm:space-y-4 rtl:text-right ltr:text-left">
                 <motion.span 
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  className="inline-block px-4 py-1.5 bg-primary text-white text-[10px] sm:text-xs font-black rounded-full uppercase tracking-widest"
+                  className="inline-block px-3 py-1 bg-primary text-white text-[10px] sm:text-xs font-black rounded-full uppercase tracking-widest"
                 >
                   {slide.subtitle}
                 </motion.span>
                 
-                <h1 className="text-3xl sm:text-6xl lg:text-8xl font-black leading-[1] tracking-tighter drop-shadow-2xl">
+                <h1 className="text-3xl sm:text-6xl lg:text-8xl font-black leading-[1.1] tracking-tighter drop-shadow-2xl">
                   {slide.title}
                 </h1>
                 
-                <p className="text-sm sm:text-lg text-gray-200/90 max-w-lg font-medium drop-shadow-md">
+                <p className="text-sm sm:text-lg text-gray-200/90 max-w-lg font-medium drop-shadow-md leading-relaxed">
                   {slide.description}
                 </p>
                 
-                <div className="pt-6">
+                <div className="pt-4 sm:pt-6">
                   <Link
                     href={slide.link}
-                    className="inline-flex items-center gap-3 px-10 py-4 bg-white text-black hover:bg-primary hover:text-white rounded-full font-black transition-all duration-300 shadow-2xl active:scale-95"
+                    className="inline-flex items-center gap-3 px-8 py-3 sm:px-10 sm:py-4 bg-white text-black hover:bg-primary hover:text-white rounded-full font-black transition-all duration-300 shadow-2xl active:scale-95"
                   >
                     تسوقي الآن
                     <ArrowRight className={cn("transition-transform", isRTL && "rotate-180")} />
@@ -144,20 +148,20 @@ export default function HeroSlider() {
       </motion.div>
 
       {/* المؤشرات السفلية */}
-      <div className="absolute bottom-10 left-0 right-0 z-20 flex justify-center gap-3">
+      <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-2.5">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => scrollTo(index)}
             className={cn(
               "h-1.5 transition-all duration-500 rounded-full",
-              currentIndex === index ? "bg-primary w-10 shadow-lg" : "bg-white/30 w-2.5 hover:bg-white/50"
+              currentIndex === index ? "bg-primary w-8 shadow-lg" : "bg-white/20 w-2 hover:bg-white/40"
             )}
           />
         ))}
       </div>
 
-      {/* الأسهم الجانبية - تم جعلها أصغر قليلاً وأبعد عن الكلام */}
+      {/* الأسهم الجانبية - مخفية في الموبايل تماماً وتظهر في الكمبيوتر */}
       <div className="hidden md:block">
         <button
           onClick={prev}

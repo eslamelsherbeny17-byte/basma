@@ -1,6 +1,6 @@
-"use client"
+        "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 
+// نفس البيانات السابقة (لم تتغير)
 const heroSlides = {
   ar: [
     {
@@ -15,7 +16,7 @@ const heroSlides = {
       title: "اكتشفي",
       subtitle: "أناقتك الخاصة",
       description: "تشكيلة حصرية من الملابس الفاخرة والمحتشمة تناسب ذوقك الرفيع",
-      image: "/slider-1.jpg", // تأكد من مسار الصورة
+      image: "/slider-1.jpg",
       link: "/shop",
       buttonText: "تسوقي الآن",
       buttonTextSecondary: "اعرفي أكثر",
@@ -80,18 +81,28 @@ export default function HeroSlider() {
   const [current, setCurrent] = useState(0)
   const [isAutoplay, setIsAutoplay] = useState(true)
   const [isHovering, setIsHovering] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const slides = heroSlides[language as keyof typeof heroSlides] || heroSlides.en
 
-  useEffect(() => {
-    if (!isAutoplay || isHovering) return
-
-    const interval = setInterval(() => {
+  // تحسين منطق التشغيل التلقائي لإعادة ضبط المؤقت عند التفاعل
+  const startAutoplay = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slides.length)
     }, 5000)
+  }, [slides.length])
 
-    return () => clearInterval(interval)
-  }, [isAutoplay, isHovering, slides.length])
+  useEffect(() => {
+    if (isAutoplay && !isHovering) {
+      startAutoplay()
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [isAutoplay, isHovering, startAutoplay])
 
   const next = useCallback(() => {
     setCurrent((prev) => (prev + 1) % slides.length)
@@ -106,128 +117,125 @@ export default function HeroSlider() {
   const goToSlide = useCallback((index: number) => {
     setCurrent(index)
     setIsAutoplay(false)
+    // إعادة تفعيل التشغيل التلقائي بعد فترة قصيرة من التفاعل اليدوي
+    setTimeout(() => setIsAutoplay(true), 10000) 
   }, [])
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        isRTL ? next() : prev()
-      } else if (e.key === "ArrowRight") {
-        isRTL ? prev() : next()
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [next, prev, isRTL])
 
   return (
     <section
-      className="relative h-[500px] sm:h-[600px] md:h-[650px] lg:h-[750px] flex items-center justify-center overflow-hidden bg-background"
+      // ✅ استخدام aspect-ratio للموبايل لضمان ملء الشاشة بشكل طولي جذاب
+      // وتحديد ارتفاع ثابت للشاشات الأكبر
+      className="relative w-full aspect-[3/4] sm:aspect-[4/3] md:aspect-auto md:h-[600px] lg:h-[700px] group overflow-hidden bg-black"
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
+      onTouchStart={() => setIsHovering(true)}
+      onTouchEnd={() => setIsHovering(false)}
       aria-roledescription="carousel"
-      aria-label="Hero carousel"
     >
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5 dark:from-accent/10 dark:to-primary/10" />
+      <AnimatePresence mode="wait">
+        {slides.map(
+          (item, index) =>
+            index === current && (
+              <motion.div
+                key={item.id}
+                // تأثير انتقال أنعم (تلاشي + حركة بسيطة)
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
+                className="absolute inset-0 w-full h-full"
+              >
+                {/* ================== الطبقة 1: الصورة الخلفية ================== */}
+                <div className="absolute inset-0 z-0">
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                    sizes="100vw"
+                  />
+                </div>
 
-      {/* Slides Container */}
-      <div className="absolute inset-0">
-        <AnimatePresence mode="wait">
-          {slides.map(
-            (item, index) =>
-              index === current && (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.02 }}
-                  transition={{ duration: 0.7, ease: "easeInOut" }}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-center justify-center h-full px-4 sm:px-6 lg:px-12 container mx-auto">
-                    {/* Text Content */}
-                    <div className="space-y-4 sm:space-y-6 lg:space-y-8 py-8 sm:py-12 lg:py-0 order-2 lg:order-1 text-center lg:text-right ltr:lg:text-left">
-                      <div className="max-w-xl mx-auto lg:mx-0">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-tight">
-                          {item.title}
-                          <span className="block text-primary mt-3 sm:mt-4 lg:mt-6">{item.subtitle}</span>
-                        </h1>
-                        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed max-w-md mx-auto lg:mx-0 mt-4 sm:mt-6 lg:mt-8">
-                          {item.description}
-                        </p>
-                      </div>
+                {/* ================== الطبقة 2: تدرج تعتيم (Overlay) ================== */}
+                {/* هذا التدرج ضروري جداً لجعل النص الأبيض مقروءاً فوق الصورة */}
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80" />
 
-                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6 lg:pt-8 justify-center lg:justify-start">
-                        <Link
-                          href={item.link}
-                          className="px-6 sm:px-8 py-3 sm:py-4 bg-primary text-primary-foreground rounded-full font-bold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-primary/20 hover:scale-105 active:scale-95 focus-ring text-sm sm:text-base"
-                        >
-                          {item.buttonText}
-                          <ArrowRight
-                            size={18}
-                            strokeWidth={2.5}
-                            className={cn("transition-transform", isRTL && "rotate-180")}
-                          />
-                        </Link>
-                        <button className="px-6 sm:px-8 py-3 sm:py-4 border-2 border-primary/20 dark:border-primary/30 text-foreground rounded-full font-bold hover:bg-secondary dark:hover:bg-secondary/50 transition-all duration-300 focus-ring text-sm sm:text-base">
-                          {item.buttonTextSecondary}
-                        </button>
-                      </div>
+                {/* ================== الطبقة 3: المحتوى النصي ================== */}
+                {/* يتموضع في الأسفل (bottom-0) وفوق طبقة التعتيم (z-20) */}
+                {/* النصوص باللون الأبيض دائماً */}
+                <div className="absolute inset-x-0 bottom-0 z-20 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col items-center md:items-start text-center md:text-right ltr:md:text-left text-white">
+                   <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.5 }}
+                      className="max-w-2xl"
+                   >
+                    {/* العنوان الرئيسي */}
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-medium text-primary/90 mb-2">
+                        {item.subtitle}
+                    </h2>
+                    <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none mb-4 drop-shadow-md">
+                      {item.title}
+                    </h1>
+                    
+                    {/* الوصف */}
+                    <p className="text-sm sm:text-base md:text-lg text-gray-200/90 max-w-md mx-auto md:mx-0 mb-6 sm:mb-8 leading-relaxed drop-shadow">
+                      {item.description}
+                    </p>
+
+                    {/* الأزرار */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-center md:justify-start">
+                      <Link
+                        href={item.link}
+                        className="px-6 sm:px-8 py-3 sm:py-4 bg-primary text-primary-foreground rounded-full font-bold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 text-sm sm:text-base"
+                      >
+                        {item.buttonText}
+                        <ArrowRight
+                          size={18}
+                          strokeWidth={2.5}
+                          className={cn("transition-transform", isRTL && "rotate-180")}
+                        />
+                      </Link>
+                      <button className="px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/30 text-white rounded-full font-bold hover:bg-white/10 transition-all duration-300 backdrop-blur-sm text-sm sm:text-base">
+                        {item.buttonTextSecondary}
+                      </button>
                     </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )
+        )}
+      </AnimatePresence>
 
-                    {/* Image */}
-                    <div className="hidden lg:flex items-center justify-center h-full order-1 lg:order-2">
-                      <div className={cn("relative w-full max-w-lg aspect-[3/4] mt-8", isRTL ? "lg:mr-12" : "lg:ml-12")}>
-                        <div className="absolute -inset-1 bg-primary/5 dark:bg-primary/10 rounded-3xl blur-xl" />
-                        <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl">
-                          <Image
-                            src={item.image}
-                            alt={item.title}
-                            fill
-                            className="object-cover"
-                            priority={index === 0}
-                            sizes="(max-width: 1024px) 0vw, 50vw"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )
-          )}
-        </AnimatePresence>
+      {/* ================== أزرار التنقل (مخفية في الموبايل) ================== */}
+      {/* تظهر فقط عند الوقوف بالماوس على الشاشات الكبيرة */}
+      <div className="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <button
+            onClick={isRTL ? next : prev}
+            className={cn(
+            "absolute top-1/2 -translate-y-1/2 z-30 p-3 bg-black/30 text-white hover:bg-primary hover:text-primary-foreground rounded-full transition-all duration-300 backdrop-blur-md",
+            "left-4 lg:left-8"
+            )}
+            aria-label="Previous slide"
+        >
+            <ChevronLeft size={24} />
+        </button>
+        <button
+            onClick={isRTL ? prev : next}
+            className={cn(
+            "absolute top-1/2 -translate-y-1/2 z-30 p-3 bg-black/30 text-white hover:bg-primary hover:text-primary-foreground rounded-full transition-all duration-300 backdrop-blur-md",
+            "right-4 lg:right-8"
+            )}
+            aria-label="Next slide"
+        >
+            <ChevronRight size={24} />
+        </button>
       </div>
 
-      {/* Navigation Buttons - الأزرار تشير للخارج دائماً */}
-      {/* السهم الأيسر: موجود على اليسار ويشير لليسار */}
-      <button
-        onClick={isRTL ? next : prev}
-        className={cn(
-          "absolute top-1/2 -translate-y-1/2 z-20 p-2.5 sm:p-3 md:p-4 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 text-foreground rounded-full transition-all duration-300 shadow-lg hover:scale-110 backdrop-blur-sm focus-ring",
-          "left-3 sm:left-6 md:left-8" 
-        )}
-        aria-label="Previous slide"
-      >
-        <ChevronLeft size={20} strokeWidth={2.5} className="sm:w-6 sm:h-6" />
-      </button>
-
-      {/* السهم الأيمن: موجود على اليمين ويشير لليمين */}
-      <button
-        onClick={isRTL ? prev : next}
-        className={cn(
-          "absolute top-1/2 -translate-y-1/2 z-20 p-2.5 sm:p-3 md:p-4 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 text-foreground rounded-full transition-all duration-300 shadow-lg hover:scale-110 backdrop-blur-sm focus-ring",
-          "right-3 sm:right-6 md:right-8"
-        )}
-        aria-label="Next slide"
-      >
-        <ChevronRight size={20} strokeWidth={2.5} className="sm:w-6 sm:h-6" />
-      </button>
-
-      {/* Indicators */}
+      {/* ================== مؤشرات السلايدر (Dots) ================== */}
       <div
-        className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-3 items-center"
+        className="absolute bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2 items-center"
         role="tablist"
       >
         {slides.map((_, index) => (
@@ -235,21 +243,16 @@ export default function HeroSlider() {
             key={index}
             onClick={() => goToSlide(index)}
             className={cn(
-              "rounded-full transition-all duration-300 cursor-pointer focus-ring",
+              "rounded-full transition-all duration-500 cursor-pointer h-1.5 sm:h-2",
               index === current
-                ? "bg-primary w-6 sm:w-8 h-2 sm:h-2.5 shadow-lg"
-                : "bg-primary/20 dark:bg-primary/30 w-2 sm:w-2.5 h-2 sm:h-2.5 hover:bg-primary/40"
+                ? "bg-primary w-6 sm:w-10" // المؤشر النشط أطول
+                : "bg-white/40 hover:bg-white/70 w-1.5 sm:w-2"
             )}
             aria-label={`Go to slide ${index + 1}`}
             aria-selected={index === current}
             role="tab"
           />
         ))}
-      </div>
-
-      {/* Screen Reader Announcement */}
-      <div className="sr-only" aria-live="polite" aria-atomic="true">
-        Slide {current + 1} of {slides.length}
       </div>
     </section>
   )

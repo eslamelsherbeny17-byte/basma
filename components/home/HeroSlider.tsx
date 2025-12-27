@@ -6,14 +6,14 @@ import Link from "next/link"
 import Image from "next/image"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence, PanInfo } from "framer-motion"
+import { motion, useMotionValue, animate } from "framer-motion"
 
 const heroSlides = {
   ar: [
     {
       id: 1,
       title: "أناقة تليق بكِ",
-      subtitle: "تشكيلة الشتاء الجديدة",
+      subtitle: "كولكشن شتاء 2025",
       description: "اكتشفي أرقى التصاميم العالمية المختارة بعناية لتناسب ذوقك الرفيع",
       image: "/slider-1.jpg",
       link: "/shop",
@@ -21,7 +21,7 @@ const heroSlides = {
     {
       id: 2,
       title: "عروض حصرية",
-      subtitle: "خصومات تصل إلى 50%",
+      subtitle: "خصومات 50%",
       description: "استمتعي بأقوى العروض على فساتين السهرة والعبايات لفترة محدودة",
       image: "/slider-2.jpg",
       link: "/shop?sale=true",
@@ -39,150 +39,141 @@ const heroSlides = {
 
 export default function HeroSlider() {
   const { language, isRTL } = useLanguage()
-  const [current, setCurrent] = useState(0)
-  const [direction, setDirection] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
   const slides = heroSlides[language as keyof typeof heroSlides] || heroSlides.ar
-
-  // منع الوميض الأبيض عن طريق تحديد خلفية ثابتة داكنة جداً
+  
+  // استخدام Motion Value للتحكم الكامل في حركة الشريط
+  const x = useMotionValue(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const paginate = useCallback((newDirection: number) => {
-    setDirection(newDirection)
-    setCurrent((prev) => (prev + newDirection + slides.length) % slides.length)
-  }, [slides.length])
-
-  // منطق السحب الاحترافي
-  const handleDragEnd = (e: any, { offset, velocity }: PanInfo) => {
-    const swipeThreshold = 50
-    if (offset.x > swipeThreshold) {
-      isRTL ? paginate(1) : paginate(-1)
-    } else if (offset.x < -swipeThreshold) {
-      isRTL ? paginate(-1) : paginate(1)
-    }
-  }
-
-  useEffect(() => {
-    const timer = setInterval(() => paginate(1), 7000)
-    return () => clearInterval(timer)
-  }, [paginate])
-
-  // إعدادات الحركة (Variants) لتحقيق انسيابية نون
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? (isRTL ? "-100%" : "100%") : (isRTL ? "100%" : "-100%"),
-      opacity: 0,
-      scale: 1.05 // تأثير زووم خفيف عند الدخول
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      zIndex: 1
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? (isRTL ? "-100%" : "100%") : (isRTL ? "100%" : "-100%"),
-      opacity: 0,
-      scale: 0.95, // تأثير تصغير خفيف عند الخروج
-      zIndex: 0
+  // دالة التنقل
+  const scrollTo = useCallback((index: number) => {
+    if (!containerRef.current) return
+    const width = containerRef.current.offsetWidth
+    // التحريك بسلاسة تامة لمكان الصورة المطلوبة
+    animate(x, isRTL ? (index * width) : (-index * width), {
+      type: "spring",
+      stiffness: 260,
+      damping: 30,
     })
+    setCurrentIndex(index)
+  }, [isRTL])
+
+  const next = useCallback(() => {
+    const nextIndex = (currentIndex + 1) % slides.length
+    scrollTo(nextIndex)
+  }, [currentIndex, slides.length, scrollTo])
+
+  const prev = useCallback(() => {
+    const prevIndex = (currentIndex - 1 + slides.length) % slides.length
+    scrollTo(prevIndex)
+  }, [currentIndex, slides.length, scrollTo])
+
+  // منطق السحب باليد (Drag)
+  const onDragEnd = (e: any, info: any) => {
+    const threshold = 50
+    if (info.offset.x < -threshold) isRTL ? prev() : next()
+    else if (info.offset.x > threshold) isRTL ? next() : prev()
+    else scrollTo(currentIndex) // إرجاع السلايدر لمكانه لو السحبة ضعيفة
   }
+
+  // أوتوبلاي
+  useEffect(() => {
+    const timer = setInterval(next, 5000)
+    return () => clearInterval(timer)
+  }, [next])
+
+  // تحديث مكان السلايدر عند تغيير حجم الشاشة أو اللغة
+  useEffect(() => {
+    scrollTo(currentIndex)
+  }, [isRTL, scrollTo, currentIndex])
 
   return (
-    <section 
-      ref={containerRef}
-      className="relative w-full aspect-[3/4] sm:aspect-auto sm:h-[600px] lg:h-[750px] overflow-hidden bg-zinc-950" // خلفية سوداء تمنع الوميض الأبيض
-    >
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={current}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { type: "spring", stiffness: 200, damping: 25 }, // حركة زمبركية ناعمة جداً
-            opacity: { duration: 0.3 },
-            scale: { duration: 0.5 }
-          }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.6}
-          onDragEnd={handleDragEnd}
-          className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
-        >
-          {/* الطبقة الأساسية: الصورة */}
-          <div className="absolute inset-0 select-none pointer-events-none">
+    <section className="relative w-full aspect-[4/5] sm:aspect-video md:h-[600px] lg:h-[750px] overflow-hidden bg-zinc-900">
+      
+      {/* الشريط المتصل الذي يحوي كل السلايدات */}
+      <motion.div
+        ref={containerRef}
+        style={{ x }}
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        onDragEnd={onDragEnd}
+        className="flex h-full w-full cursor-grab active:cursor-grabbing touch-pan-y"
+      >
+        {slides.map((slide, index) => (
+          <div 
+            key={slide.id} 
+            className="relative h-full w-full flex-shrink-0 select-none"
+          >
+            {/* الصورة - محملة مسبقاً وجاهزة دائماً */}
             <Image
-              src={slides[current].image}
-              alt={slides[current].title}
+              src={slide.image}
+              alt={slide.title}
               fill
-              className="object-cover"
-              priority // شحن الصورة فوراً لمنع التأخير
+              className="object-cover pointer-events-none"
+              priority={index === 0}
               quality={90}
             />
-            {/* ظل سينمائي (Overlay) متدرج واحترافي جداً */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-          </div>
+            
+            {/* التعتيم (Overlay) */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
 
-          {/* الطبقة العلوية: المحتوى (يتحرك ككتلة واحدة مع الصورة) */}
-          <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-16 lg:p-24 pb-20 sm:pb-32 text-white">
-            <div className="max-w-3xl space-y-3 sm:space-y-5">
-              <span className="inline-block px-4 py-1.5 bg-primary/90 backdrop-blur-md text-white text-[10px] sm:text-sm font-black rounded-full uppercase tracking-widest shadow-xl">
-                {slides[current].subtitle}
-              </span>
-              
-              <h1 className="text-3xl sm:text-5xl lg:text-8xl font-black leading-[1.1] drop-shadow-2xl">
-                {slides[current].title}
-              </h1>
-              
-              <p className="text-sm sm:text-xl text-gray-200/90 max-w-xl font-medium leading-relaxed line-clamp-2">
-                {slides[current].description}
-              </p>
-
-              <div className="pt-4 sm:pt-6">
-                <Link
-                  href={slides[current].link}
-                  className="group inline-flex items-center gap-3 px-8 py-3.5 sm:px-10 sm:py-4 bg-white text-black hover:bg-primary hover:text-white rounded-full font-black transition-all duration-500 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)] active:scale-95"
-                >
-                  تسوقي الآن
-                  <ArrowRight className={cn("transition-transform group-hover:translate-x-2 duration-300", isRTL && "rotate-180 group-hover:-translate-x-2")} />
-                </Link>
+            {/* المحتوى النصي - يتحرك مع الصورة تماماً */}
+            <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-16 lg:p-24 pb-24 sm:pb-32 text-white">
+              <div className="max-w-3xl space-y-4 rtl:text-right ltr:text-left">
+                <span className="inline-block px-4 py-1 bg-primary text-white text-[10px] sm:text-xs font-black rounded-full uppercase tracking-tighter">
+                  {slide.subtitle}
+                </span>
+                <h1 className="text-3xl sm:text-5xl lg:text-8xl font-black leading-none tracking-tighter drop-shadow-2xl">
+                  {slide.title}
+                </h1>
+                <p className="text-sm sm:text-lg text-gray-200/90 max-w-lg font-medium drop-shadow-md">
+                  {slide.description}
+                </p>
+                <div className="pt-4">
+                  <Link
+                    href={slide.link}
+                    className="inline-flex items-center gap-3 px-8 py-3.5 bg-white text-black hover:bg-primary hover:text-white rounded-full font-black transition-all duration-300 shadow-2xl"
+                  >
+                    تسوقي الآن
+                    <ArrowRight className={cn(isRTL && "rotate-180")} />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </motion.div>
-      </AnimatePresence>
+        ))}
+      </motion.div>
 
-      {/* المؤشرات السفلية (Bullets) - تصميم نون العصري */}
-      <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-2.5">
+      {/* المؤشرات (Dots) - تصميم نون السفلي */}
+      <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-2">
         {slides.map((_, index) => (
           <button
             key={index}
-            onClick={() => setCurrent(index)}
+            onClick={() => scrollTo(index)}
             className={cn(
               "h-1.5 transition-all duration-500 rounded-full",
-              index === current 
-                ? "bg-primary w-8 sm:w-12 shadow-lg" 
-                : "bg-white/30 w-2 sm:w-3"
+              currentIndex === index 
+                ? "bg-primary w-8" 
+                : "bg-white/30 w-2"
             )}
           />
         ))}
       </div>
 
-      {/* أزرار التنقل الجانبية (مخفية في الموبايل لتقليل الازدحام) */}
+      {/* أزرار التنقل - ديسكتوب فقط */}
       <div className="hidden md:block">
         <button
-          onClick={() => paginate(-1)}
-          className="absolute left-8 top-1/2 -translate-y-1/2 z-30 p-4 bg-black/10 hover:bg-primary text-white rounded-full backdrop-blur-xl transition-all duration-500 border border-white/10"
+          onClick={prev}
+          className="absolute left-6 top-1/2 -translate-y-1/2 z-30 p-3 bg-white/10 hover:bg-primary text-white rounded-full backdrop-blur-md transition-all border border-white/10"
         >
-          <ChevronLeft size={32} strokeWidth={2.5} />
+          <ChevronLeft size={24} />
         </button>
         <button
-          onClick={() => paginate(1)}
-          className="absolute right-8 top-1/2 -translate-y-1/2 z-30 p-4 bg-black/10 hover:bg-primary text-white rounded-full backdrop-blur-xl transition-all duration-500 border border-white/10"
+          onClick={next}
+          className="absolute right-6 top-1/2 -translate-y-1/2 z-30 p-3 bg-white/10 hover:bg-primary text-white rounded-full backdrop-blur-md transition-all border border-white/10"
         >
-          <ChevronRight size={32} strokeWidth={2.5} />
+          <ChevronRight size={24} />
         </button>
       </div>
     </section>

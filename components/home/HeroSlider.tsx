@@ -8,7 +8,6 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { cn } from "@/lib/utils"
 import { motion, useMotionValue, animate } from "framer-motion"
 
-// الصور الثابتة كما طلبت
 const heroSlides = {
   ar: [
     {
@@ -86,7 +85,6 @@ export default function HeroSlider() {
   return (
     <section className="relative w-full aspect-[4/5] sm:aspect-video md:h-[650px] lg:h-[800px] overflow-hidden bg-zinc-950">
       
-      {/* الشريط المتصل */}
       <motion.div
         ref={containerRef}
         style={{ x }}
@@ -100,24 +98,19 @@ export default function HeroSlider() {
             key={slide.id} 
             className="relative h-full w-full flex-shrink-0 select-none overflow-hidden"
           >
-            {/* ✅ الحل لمشكلة قص الرأس في الكمبيوتر:
-              - استخدمنا md:object-top لضمان ظهور الجزء العلوي من الصورة في الشاشات الكبيرة.
-              - استخدمنا priority={index === 0} لمنع الوميض الأبيض عند أول تحميل.
-            */}
             <Image
               src={slide.image}
               alt={slide.title}
               fill
-              className="object-cover md:object-top pointer-events-none transition-transform duration-[2000ms] ease-out"
+              className="object-cover md:object-top pointer-events-none"
               priority={index === 0}
               quality={100}
             />
             
-            {/* التعتيم المدمج (Overlay) */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
 
-            {/* المحتوى النصي */}
-            <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-20 lg:p-24 pb-24 sm:pb-32 text-white">
+            {/* ✅ التعديل هنا: إضافة md:px-32 و lg:px-48 لخلق مساحة آمنة بعيدة عن الأسهم */}
+            <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-20 md:px-32 lg:px-48 pb-24 sm:pb-32 text-white">
               <div className="max-w-4xl space-y-4 rtl:text-right ltr:text-left">
                 <motion.span 
                   initial={{ opacity: 0, y: 10 }}
@@ -150,7 +143,7 @@ export default function HeroSlider() {
         ))}
       </motion.div>
 
-      {/* النقاط السفلية (Indicators) */}
+      {/* المؤشرات السفلية */}
       <div className="absolute bottom-10 left-0 right-0 z-20 flex justify-center gap-3">
         {slides.map((_, index) => (
           <button
@@ -158,28 +151,25 @@ export default function HeroSlider() {
             onClick={() => scrollTo(index)}
             className={cn(
               "h-1.5 transition-all duration-500 rounded-full",
-              currentIndex === index 
-                ? "bg-primary w-10 shadow-lg" 
-                : "bg-white/30 w-2.5 hover:bg-white/50"
+              currentIndex === index ? "bg-primary w-10 shadow-lg" : "bg-white/30 w-2.5 hover:bg-white/50"
             )}
-            aria-label={`Slide ${index + 1}`}
           />
         ))}
       </div>
 
-      {/* أزرار الكمبيوتر */}
+      {/* الأسهم الجانبية - تم جعلها أصغر قليلاً وأبعد عن الكلام */}
       <div className="hidden md:block">
         <button
           onClick={prev}
-          className="absolute left-8 top-1/2 -translate-y-1/2 z-30 p-4 bg-white/10 hover:bg-primary text-white rounded-full backdrop-blur-xl transition-all border border-white/10"
+          className="absolute left-6 lg:left-10 top-1/2 -translate-y-1/2 z-30 p-3 bg-white/5 hover:bg-primary text-white rounded-full backdrop-blur-xl transition-all border border-white/10"
         >
-          <ChevronLeft size={32} strokeWidth={2.5} />
+          <ChevronLeft size={28} strokeWidth={2.5} />
         </button>
         <button
           onClick={next}
-          className="absolute right-8 top-1/2 -translate-y-1/2 z-30 p-4 bg-white/10 hover:bg-primary text-white rounded-full backdrop-blur-xl transition-all border border-white/10"
+          className="absolute right-6 lg:right-10 top-1/2 -translate-y-1/2 z-30 p-3 bg-white/5 hover:bg-primary text-white rounded-full backdrop-blur-xl transition-all border border-white/10"
         >
-          <ChevronRight size={32} strokeWidth={2.5} />
+          <ChevronRight size={28} strokeWidth={2.5} />
         </button>
       </div>
     </section>

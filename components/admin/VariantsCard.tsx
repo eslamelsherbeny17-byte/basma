@@ -5,26 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
-const PREDEFINED_COLORS = [
-  { name: 'أسود', hex: '#000000' },
-  { name: 'أبيض', hex: '#FFFFFF' },
-  { name: 'أحمر', hex: '#EF4444' },
-  { name: 'أزرق', hex: '#3B82F6' },
-  { name: 'أخضر', hex: '#22C55E' },
-  { name: 'أصفر', hex: '#EAB308' },
-  { name: 'رمادي', hex: '#6B7280' },
-  { name: 'بيج', hex: '#F5F5DC' },
-  { name: 'كحلي', hex: '#1E3A8A' },
-  { name: 'ذهبي', hex: '#FFD700' },
-  { name: 'بني', hex: '#8B4513' },
-  { name: 'وردي', hex: '#EC4899' },
-]
-
-const PREDEFINED_SIZES = [
-  'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL',
-  '40', '41', '42', '43', '44', '45',
-]
+import { PREDEFINED_COLORS, PREDEFINED_SIZES, getColorHex } from '@/lib/constants'
 
 interface Props {
   colors: string[]
@@ -44,7 +25,6 @@ export default function VariantsCard({
   onAddCustomColor,
 }: Props) {
   return (
-    // تم استبدال bg-white بـ bg-card و الألوان الثابتة بـ border-border
     <Card className='border-border shadow-xl bg-card rounded-2xl transition-colors duration-300'>
       <CardHeader className='pb-3 pt-4 px-6 border-b border-border/50'>
         <CardTitle className='text-xl font-bold flex items-center gap-3 text-foreground'>
@@ -105,8 +85,7 @@ export default function VariantsCard({
           {colors.length > 0 && (
             <div className='flex flex-wrap gap-2 mt-4 p-4 bg-muted/30 rounded-2xl border border-border/50 min-h-[60px]'>
               {colors.map((color) => {
-                const predefinedColor = PREDEFINED_COLORS.find((c) => c.name === color)
-                const colorHex = predefinedColor?.hex || color
+                const colorHex = getColorHex(color)
                 return (
                   <Badge
                     key={color}

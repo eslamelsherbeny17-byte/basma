@@ -483,10 +483,10 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts Row 1 */}
-      <div className='grid lg:grid-cols-2 gap-6'>
+      {/* <div className='grid lg:grid-cols-2 gap-6'>
         <SalesChart data={salesData} />
         <CategoryDistribution data={categoryData} />
-      </div>
+      </div> */}
 
      
 

@@ -25,6 +25,7 @@ import {
   Zap,
   Settings,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -84,9 +85,11 @@ export function Navbar() {
   const [searchResults, setSearchResults] = useState<Product[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false)
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
   const searchRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const wishlistCount = wishlist.length
   const navLinks = navLinksConfig[language]
@@ -112,6 +115,29 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [handleScroll])
 
+  // Handle Sheet Scroll Indicator
+  const handleSheetScroll = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const { scrollTop, scrollHeight, clientHeight } = container
+    const isScrollable = scrollHeight > clientHeight
+    const hasMoreContent = scrollTop + clientHeight < scrollHeight - 20
+
+    setShowScrollIndicator(isScrollable && hasMoreContent)
+  }, [])
+
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    // Check initially
+    handleSheetScroll()
+
+    container.addEventListener('scroll', handleSheetScroll, { passive: true })
+    return () => container.removeEventListener('scroll', handleSheetScroll)
+  }, [handleSheetScroll, isMobileMenuOpen])
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false)
@@ -132,15 +158,10 @@ export function Navbar() {
     setIsSearching(true)
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        console.log('🔍 Searching for:', searchQuery.trim())
-
         const response = await productsAPI.getAll({
           keyword: searchQuery.trim(),
           limit: 5,
         })
-
-        console.log('✅ Search results:', response)
-
         setSearchResults(response.data || [])
         setShowSearchResults(true)
       } catch (error) {
@@ -175,7 +196,6 @@ export function Navbar() {
     (e: React.FormEvent) => {
       e.preventDefault()
       if (searchQuery.trim()) {
-        console.log('🚀 Navigating to search:', searchQuery.trim())
         router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`)
         setSearchQuery('')
         setShowSearchResults(false)
@@ -208,8 +228,8 @@ export function Navbar() {
             : 'bg-background border-b border-border/40'
         )}
       >
-        {/* Top Banner */}
-        <div className='relative overflow-hidden bg-gradient-to-r from-primary via-accent to-primary'>
+        {/* Top Banner - مخفي على الموبايل الصغير، مُصغّر على الموبايل المتوسط */}
+        <div className='relative overflow-hidden bg-gradient-to-r from-primary via-accent to-primary hidden sm:block'>
           <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10" />
 
           <motion.div
@@ -218,29 +238,31 @@ export function Navbar() {
             transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
           />
 
-          <div className='container mx-auto px-4 py-2.5 relative'>
+          <div className='container mx-auto px-4 py-1.5 sm:py-2 relative'>
             <div className='flex items-center justify-center'>
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className='text-center text-[11px] sm:text-sm font-semibold text-white flex items-center justify-center gap-3 sm:gap-4'
+                className='text-center text-[10px] sm:text-xs md:text-sm font-semibold text-white flex items-center justify-center gap-2 sm:gap-4'
               >
                 <motion.span
-                  className='flex items-center gap-1.5'
+                  className='flex items-center gap-1'
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <Sparkles className='h-3.5 w-3.5 sm:h-4 sm:w-4' />
-                  <span>{t('freeShipping')}</span>
+                  <Sparkles className='h-3 w-3 sm:h-3.5 sm:w-3.5' />
+                  <span className='hidden sm:inline'>{t('freeShipping')}</span>
+                  <span className='sm:hidden'>شحن مجاني</span>
                 </motion.span>
-                <span className='hidden sm:inline opacity-50'>•</span>
+                <span className='opacity-50'>•</span>
                 <motion.span
-                  className='flex items-center gap-1.5'
+                  className='flex items-center gap-1'
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                 >
-                  <Tag className='h-3.5 w-3.5 sm:h-4 sm:w-4' />
-                  <span>{t('discount')}</span>
+                  <Tag className='h-3 w-3 sm:h-3.5 sm:w-3.5' />
+                  <span className='hidden sm:inline'>{t('discount')}</span>
+                  <span className='sm:hidden'>خصم 20%</span>
                 </motion.span>
               </motion.div>
             </div>
@@ -249,13 +271,13 @@ export function Navbar() {
 
         {/* Main Navbar */}
         <div className='container mx-auto px-4'>
-          <div className='flex h-16 sm:h-18 items-center justify-between'>
+          <div className='flex h-14 sm:h-16 md:h-18 items-center justify-between'>
             {/* Left: Menu Button (Mobile Only) */}
             <div className='lg:hidden w-10'>
               <Button
                 variant='ghost'
                 size='icon'
-                className='h-10 w-10 rounded-lg hover:bg-primary/10'
+                className='h-9 w-9 sm:h-10 sm:w-10 rounded-lg hover:bg-primary/10'
                 onClick={() => setIsMobileMenuOpen(true)}
               >
                 <Menu className='h-5 w-5' />
@@ -276,7 +298,7 @@ export function Navbar() {
             {/* Center: Logo (Mobile Only) */}
             <div className='lg:hidden flex-1 flex justify-center px-2'>
               <Link href='/'>
-                <span className='text-2xl font-black tracking-tight text-primary'>
+                <span className='text-xl sm:text-2xl font-black tracking-tight text-primary'>
                   {t('brandName')}
                 </span>
               </Link>
@@ -507,7 +529,7 @@ export function Navbar() {
               <Button
                 variant='ghost'
                 size='icon'
-                className='md:hidden h-10 w-10 rounded-lg hover:bg-primary/10'
+                className='md:hidden h-9 w-9 sm:h-10 sm:w-10 rounded-lg hover:bg-primary/10'
                 onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
               >
                 <Search className='h-5 w-5' />
@@ -591,12 +613,12 @@ export function Navbar() {
                 )}
               </div>
 
-              {/* Wishlist - محسّن ✨ */}
+              {/* Wishlist */}
               <Link href='/wishlist'>
                 <Button
                   variant='ghost'
                   size='icon'
-                  className='h-10 w-10 relative rounded-lg hover:bg-pink-50 dark:hover:bg-pink-950/30 transition-all'
+                  className='h-9 w-9 sm:h-10 sm:w-10 relative rounded-lg hover:bg-pink-50 dark:hover:bg-pink-950/30 transition-all'
                 >
                   <Heart
                     className={cn(
@@ -611,9 +633,9 @@ export function Navbar() {
                       animate={{ scale: 1 }}
                       whileHover={{ scale: 1.15 }}
                       transition={{ type: 'spring', stiffness: 300 }}
-                      className='absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1.5 bg-gradient-to-br from-pink-500 via-pink-600 to-rose-600 rounded-full flex items-center justify-center ring-4 ring-background shadow-xl'
+                      className='absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 min-w-[18px] h-[18px] sm:min-w-[22px] sm:h-[22px] px-1 sm:px-1.5 bg-gradient-to-br from-pink-500 via-pink-600 to-rose-600 rounded-full flex items-center justify-center ring-2 sm:ring-4 ring-background shadow-xl'
                     >
-                      <span className='text-xs font-extrabold text-white leading-none'>
+                      <span className='text-[9px] sm:text-xs font-extrabold text-white leading-none'>
                         {wishlistCount > 99 ? '99+' : wishlistCount}
                       </span>
                     </motion.div>
@@ -621,11 +643,11 @@ export function Navbar() {
                 </Button>
               </Link>
 
-              {/* Cart - محسّن ✨ */}
+              {/* Cart */}
               <Button
                 variant='ghost'
                 size='icon'
-                className='h-10 w-10 relative rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all'
+                className='h-9 w-9 sm:h-10 sm:w-10 relative rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all'
                 onClick={() => setIsCartOpen(true)}
               >
                 <ShoppingCart
@@ -640,9 +662,9 @@ export function Navbar() {
                     animate={{ scale: 1 }}
                     whileHover={{ scale: 1.15 }}
                     transition={{ type: 'spring', stiffness: 300 }}
-                    className='absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1.5 bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-600 rounded-full flex items-center justify-center ring-4 ring-background shadow-xl'
+                    className='absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 min-w-[18px] h-[18px] sm:min-w-[22px] sm:h-[22px] px-1 sm:px-1.5 bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-600 rounded-full flex items-center justify-center ring-2 sm:ring-4 ring-background shadow-xl'
                   >
-                    <span className='text-xs font-extrabold text-white leading-none'>
+                    <span className='text-[9px] sm:text-xs font-extrabold text-white leading-none'>
                       {itemsCount > 99 ? '99+' : itemsCount}
                     </span>
                   </motion.div>
@@ -738,13 +760,14 @@ export function Navbar() {
         </AnimatePresence>
       </header>
 
-      {/* Mobile Menu Sheet */}
+      {/* Mobile Menu Sheet - محسّن ✅ */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent
           side={isRTL ? 'right' : 'left'}
           className='w-[320px] p-0 flex flex-col [&>button]:hidden'
         >
-          <div className='p-6 border-b bg-gradient-to-br from-primary/5 to-accent/5'>
+          {/* Header - ثابت */}
+          <div className='p-5 border-b bg-gradient-to-br from-primary/5 to-accent/5 flex-shrink-0'>
             <div className='flex items-center justify-between mb-4'>
               <span className='text-2xl font-black text-primary'>
                 {t('brandName')}
@@ -778,8 +801,15 @@ export function Navbar() {
             )}
           </div>
 
-          <nav className='flex-1 overflow-y-auto py-4 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-            <div className='px-4 space-y-1'>
+          {/* Content - قابل للـ Scroll */}
+          <div
+            ref={scrollContainerRef}
+            className='flex-1 overflow-y-auto py-4 relative'
+            style={{
+              scrollbarWidth: 'thin',
+            }}
+          >
+            <div className='px-4 space-y-1 pb-4'>
               <p className='text-xs font-semibold text-muted-foreground px-3 mb-2'>
                 {language === 'ar' ? 'التنقل' : 'Navigation'}
               </p>
@@ -827,7 +857,7 @@ export function Navbar() {
             {isAuthenticated && (
               <>
                 <Separator className='my-4' />
-                <div className='px-4 space-y-1'>
+                <div className='px-4 space-y-1 pb-4'>
                   <p className='text-xs font-semibold text-muted-foreground px-3 mb-2'>
                     {language === 'ar' ? 'حسابي' : 'My Account'}
                   </p>
@@ -883,13 +913,44 @@ export function Navbar() {
                 </div>
               </>
             )}
-          </nav>
 
-          <div className='p-4 border-t bg-muted/30 space-y-3'>
+            {/* مسافة في النهاية للسماح بالـ Scroll */}
+            <div className='h-32' />
+          </div>
+
+          {/* Scroll Indicator - مؤشر وجود محتوى إضافي */}
+          <AnimatePresence>
+            {showScrollIndicator && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className='absolute bottom-[180px] left-0 right-0 h-20 pointer-events-none'
+                style={{
+                  background:
+                    'linear-gradient(to bottom, transparent, hsl(var(--background)) 70%)',
+                }}
+              >
+                <motion.div
+                  animate={{ y: [0, 8, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className='absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1'
+                >
+                  <ChevronDown className='h-5 w-5 text-primary' />
+                  <p className='text-xs font-bold text-primary'>
+                    {language === 'ar' ? 'المزيد أدناه' : 'More below'}
+                  </p>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Footer - ثابت */}
+          <div className='p-4 border-t bg-muted/30 space-y-2.5 flex-shrink-0'>
             <p className='text-xs font-semibold text-muted-foreground px-3'>
               {language === 'ar' ? 'الإعدادات' : 'Settings'}
             </p>
-            <div className='flex items-center justify-between px-4 py-2.5 bg-background rounded-lg'>
+            <div className='flex items-center justify-between px-4 py-2 bg-background rounded-lg'>
               <div className='flex items-center gap-2'>
                 <Settings className='h-4 w-4 text-muted-foreground' />
                 <span className='text-sm font-semibold'>
@@ -898,7 +959,7 @@ export function Navbar() {
               </div>
               <LanguageToggle />
             </div>
-            <div className='flex items-center justify-between px-4 py-2.5 bg-background rounded-lg'>
+            <div className='flex items-center justify-between px-4 py-2 bg-background rounded-lg'>
               <div className='flex items-center gap-2'>
                 <Settings className='h-4 w-4 text-muted-foreground' />
                 <span className='text-sm font-semibold'>
@@ -910,7 +971,7 @@ export function Navbar() {
             {isAuthenticated ? (
               <Button
                 variant='outline'
-                className='w-full text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold'
+                className='w-full text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold h-11'
                 onClick={() => {
                   logout()
                   setIsMobileMenuOpen(false)
@@ -921,7 +982,7 @@ export function Navbar() {
               </Button>
             ) : (
               <Link href='/login' onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className='w-full bg-primary hover:bg-primary/90 shadow-lg font-semibold'>
+                <Button className='w-full bg-primary hover:bg-primary/90 shadow-lg font-semibold h-11'>
                   {t('login')}
                 </Button>
               </Link>

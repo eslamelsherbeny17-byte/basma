@@ -52,16 +52,8 @@ function normalizeResponse(response: any) {
   return { data: response }
 }
 
-function logFormData(formData: FormData) {
-  console.log('📤 FormData Content:')
-  Array.from(formData.entries()).forEach(([key, value]) => {
-    console.log(`  ${key}:`, value instanceof File ? `[File] ${value.name}` : value)
-  })
-}
-
 // ==================== API SECTIONS ====================
 
-// 1. Dashboard
 export const adminDashboardAPI = {
   getStats: async () => {
     const response = await adminAPI.get('/admin/dashboard/stats')
@@ -77,7 +69,6 @@ export const adminDashboardAPI = {
   },
 }
 
-// 2. Products
 export const adminProductsAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/products', { params })
@@ -105,7 +96,6 @@ export const adminProductsAPI = {
   },
 }
 
-// 3. Categories
 export const adminCategoriesAPI = {
   getAll: async () => {
     const response = await adminAPI.get('/categories')
@@ -129,7 +119,6 @@ export const adminCategoriesAPI = {
   },
 }
 
-// 4. SubCategories
 export const adminSubCategoriesAPI = {
   getAll: async () => {
     const response = await adminAPI.get('/subcategories')
@@ -143,17 +132,12 @@ export const adminSubCategoriesAPI = {
     const response = await adminAPI.post('/subcategories', data)
     return normalizeResponse(response)
   },
-  update: async (id: string, data: any) => {
-    const response = await adminAPI.put(`/subcategories/${id}`, data)
-    return normalizeResponse(response)
-  },
   delete: async (id: string) => {
     const response = await adminAPI.delete(`/subcategories/${id}`)
     return response.data
   },
 }
 
-// 5. Brands
 export const adminBrandsAPI = {
   getAll: async () => {
     const response = await adminAPI.get('/brands')
@@ -165,19 +149,15 @@ export const adminBrandsAPI = {
     })
     return normalizeResponse(response)
   },
-  update: async (id: string, data: FormData) => {
-    const response = await adminAPI.put(`/brands/${id}`, data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    return normalizeResponse(response)
-  },
   delete: async (id: string) => {
     const response = await adminAPI.delete(`/brands/${id}`)
     return response.data
   },
 }
 
-// 6. Orders
+// -------------------------------------------------------------------------
+// تعديل قسم الطلبات ليشمل دوال التحديث المطلوبة في صفحة تفاصيل الطلب
+// -------------------------------------------------------------------------
 export const adminOrdersAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/orders', { params })
@@ -191,21 +171,26 @@ export const adminOrdersAPI = {
     const response = await adminAPI.put(`/orders/${id}`, { status })
     return normalizeResponse(response)
   },
+  // دالة تحديث حالة الدفع (المطلوبة للـ Build)
+  updatePaidStatus: async (id: string) => {
+    const response = await adminAPI.put(`/orders/${id}/pay`)
+    return normalizeResponse(response)
+  },
+  // دالة تحديث حالة التوصيل (المطلوبة للـ Build)
+  updateDeliveredStatus: async (id: string) => {
+    const response = await adminAPI.put(`/orders/${id}/deliver`)
+    return normalizeResponse(response)
+  },
   delete: async (id: string) => {
     const response = await adminAPI.delete(`/orders/${id}`)
     return response.data
   }
 }
 
-// 7. Users
 export const adminUsersAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/users', { params })
     return normalizeResponse(response)
-  },
-  getById: async (id: string) => {
-    const response = await adminAPI.get(`/users/${id}`)
-    return normalizeResponse(response).data
   },
   changeRole: async (id: string, role: string) => {
     const response = await adminAPI.put(`/users/changeUserRole/${id}`, { role })
@@ -217,7 +202,6 @@ export const adminUsersAPI = {
   },
 }
 
-// 8. Reviews
 export const adminReviewsAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/reviews', { params })
@@ -226,10 +210,6 @@ export const adminReviewsAPI = {
   delete: async (id: string) => {
     const response = await adminAPI.delete(`/reviews/${id}`)
     return response.data
-  },
-  approve: async (id: string) => {
-    const response = await adminAPI.put(`/reviews/${id}/approve`)
-    return normalizeResponse(response)
   },
 }
 

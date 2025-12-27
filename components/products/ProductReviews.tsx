@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Star, ThumbsUp, MessageSquare } from 'lucide-react'
+import { Star, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -22,22 +22,25 @@ interface Review {
   createdAt: string
 }
 
+// ✅ تحديث الواجهة لتشمل onAuthCheck وإصلاح نوع الـ callback
 interface ProductReviewsProps {
   reviews: Review[]
   productId: string
+  onAuthCheck: (callback: () => void) => void 
 }
 
-export function ProductReviews({ reviews, productId }: ProductReviewsProps) {
+export function ProductReviews({ reviews, productId, onAuthCheck }: ProductReviewsProps) {
   const [showAddReview, setShowAddReview] = useState(false)
   const searchParams = useSearchParams()
 
   useEffect(() => {
     const shouldOpenReview = searchParams.get('openReview')
     if (shouldOpenReview === 'true') {
-      setShowAddReview(true)
+      // ✅ استخدام فحص الحماية عند المحاولة من الرابط أيضاً
+      onAuthCheck(() => setShowAddReview(true))
       window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [searchParams])
+  }, [searchParams, onAuthCheck])
 
   const averageRating =
     reviews.length > 0
@@ -49,80 +52,75 @@ export function ProductReviews({ reviews, productId }: ProductReviewsProps) {
     count: reviews.filter((r) => r.ratings === stars).length,
     percentage:
       reviews.length > 0
-        ? (reviews.filter((r) => r.ratings === stars).length / reviews.length) *
-          100
+        ? (reviews.filter((r) => r.ratings === stars).length / reviews.length) * 100
         : 0,
   }))
 
   return (
-    <section className='mt-12'>
-      <div className='bg-card text-card-foreground p-6 md:p-8 rounded-xl shadow-sm border border-border'>
-        {/* Header */}
-        <div className='flex items-center justify-between mb-8 flex-wrap gap-4'>
-          <div className='flex items-center gap-3'>
-            <div className='w-12 h-12 rounded-xl gold-gradient flex items-center justify-center shadow-lg'>
-              <MessageSquare className='h-6 w-6 text-white' />
+    <section className='mt-16 w-full overflow-hidden'>
+      <div className='bg-card text-card-foreground p-5 md:p-10 rounded-[2.5rem] shadow-sm border border-border transition-all'>
+        
+        {/* Header Section */}
+        <div className='flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6'>
+          <div className='flex items-center gap-4'>
+            <div className='w-14 h-14 rounded-2xl gold-gradient flex items-center justify-center shadow-lg shrink-0'>
+              <MessageSquare className='h-7 w-7 text-white' />
             </div>
             <div>
-              <h2 className='text-2xl md:text-3xl font-bold text-foreground'>
-                التقييمات والآراء
+              <h2 className='text-2xl md:text-4xl font-black text-foreground tracking-tight'>
+                آراء المجتمع
               </h2>
-              <p className='text-sm text-muted-foreground'>
-                {reviews.length} تقييم من عملائنا
+              <p className='text-sm font-bold text-muted-foreground mt-1'>
+                {reviews.length} مراجعة موثقة
               </p>
             </div>
           </div>
+          
+          {/* زر كتابة التقييم مربوط بفحص تسجيل الدخول ✅ */}
           <Button
-            onClick={() => setShowAddReview(true)}
-            className='gold-gradient text-white border-0'
-            size='lg'
+            onClick={() => onAuthCheck(() => setShowAddReview(true))}
+            className='gold-gradient text-white h-14 px-8 rounded-2xl font-black text-lg shadow-xl hover:scale-105 transition-transform w-full md:w-auto'
           >
             <Star className='ml-2 h-5 w-5 fill-current' />
-            اكتب تقييمك
+            شاركنا تجربتك
           </Button>
         </div>
 
-        {/* Rating Summary */}
-        <div className='grid md:grid-cols-3 gap-6 mb-8'>
-          <div className='text-center p-8 bg-secondary/50 dark:bg-secondary/20 rounded-2xl border border-border'>
-            <div className='text-6xl font-bold text-primary mb-3'>
-              {averageRating.toFixed(1)}
-            </div>
-            <div className='flex justify-center items-center gap-1 mb-3'>
+        {/* Rating Grid */}
+        <div className='grid grid-cols-1 lg:grid-cols-12 gap-10'>
+          
+          {/* Average Display */}
+          <div className='lg:col-span-4 flex flex-col items-center justify-center p-8 bg-muted/30 rounded-[2rem] border border-border/50 text-center'>
+            <span className='text-7xl font-black text-primary mb-2'>{averageRating.toFixed(1)}</span>
+            <div className='flex gap-1 mb-4'>
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={cn(
                     'h-6 w-6',
-                    i < Math.floor(averageRating)
-                      ? 'fill-primary text-primary'
-                      : 'text-muted-foreground/30'
+                    i < Math.floor(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-muted/20'
                   )}
                 />
               ))}
             </div>
-            <p className='text-sm font-semibold text-muted-foreground'>
-              بناءً على {reviews.length} تقييم
-            </p>
+            <p className='text-sm font-bold text-muted-foreground'>الجودة العامة بناءً على التجارب</p>
           </div>
 
-          <div className='md:col-span-2 space-y-3'>
-            <h3 className='font-bold text-lg mb-4 text-foreground'>
-              توزيع التقييمات
-            </h3>
+          {/* Distribution Bars */}
+          <div className='lg:col-span-8 flex flex-col justify-center space-y-4'>
             {ratingDistribution.map(({ stars, count, percentage }) => (
-              <div key={stars} className='flex items-center gap-3'>
-                <div className='flex items-center gap-1 w-24'>
+              <div key={stars} className='flex items-center gap-4'>
+                <div className='flex items-center gap-2 w-20 shrink-0'>
+                  <span className='font-black text-foreground'>{stars}</span>
                   <Star className='h-4 w-4 fill-primary text-primary' />
-                  <span className='font-semibold text-foreground'>{stars}</span>
                 </div>
-                <div className='flex-1 h-3 bg-muted rounded-full overflow-hidden'>
+                <div className='flex-1 h-2.5 bg-muted rounded-full overflow-hidden'>
                   <div
-                    className='h-full gold-gradient transition-all duration-500'
+                    className='h-full gold-gradient rounded-full transition-all duration-700'
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <span className='text-sm font-semibold text-muted-foreground w-16 text-right'>
+                <span className='text-xs font-black text-muted-foreground w-12 text-left'>
                   {count}
                 </span>
               </div>
@@ -130,64 +128,56 @@ export function ProductReviews({ reviews, productId }: ProductReviewsProps) {
           </div>
         </div>
 
-        <Separator className='my-8 bg-border' />
+        <Separator className='my-12 bg-border/50' />
 
         {/* Reviews List */}
-        <div className='space-y-6'>
+        <div className='space-y-8'>
           {reviews.length === 0 ? (
-            <div className='text-center py-16'>
-              <MessageSquare className='h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20' />
-              <h3 className='text-xl font-bold text-foreground mb-2'>
-                لا توجد تقييمات بعد
-              </h3>
-              <Button onClick={() => setShowAddReview(true)} variant='outline'>
-                كن أول من يقيّم
-              </Button>
+            <div className='text-center py-10 opacity-50'>
+              <p className='text-lg font-bold'>كن أول من يضع بصمته هنا..</p>
             </div>
           ) : (
             reviews.map((review) => (
               <div
                 key={review._id}
-                className='border-b border-border pb-6 last:border-0 hover:bg-muted/30 p-4 rounded-xl transition-all'
+                className='group bg-muted/10 hover:bg-muted/30 p-6 rounded-[2rem] transition-all duration-300 border border-transparent hover:border-border/50'
               >
-                <div className='flex items-start gap-4'>
-                  <Avatar className='h-14 w-14 border border-border'>
+                <div className='flex flex-col md:flex-row gap-5'>
+                  <Avatar className='h-14 w-14 border-2 border-background shadow-sm shrink-0'>
                     <AvatarImage src={review.user.image} />
-                    <AvatarFallback className='bg-primary/10 text-primary font-bold'>
+                    <AvatarFallback className='bg-primary/10 text-primary font-black text-xl'>
                       {review.user.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className='flex-1'>
-                    <div className='flex items-start justify-between mb-3 flex-wrap'>
+                  
+                  <div className='flex-1 space-y-3'>
+                    <div className='flex flex-col md:flex-row md:items-center justify-between gap-2'>
                       <div>
-                        <h4 className='font-bold text-foreground'>
-                          {review.user.name}
-                        </h4>
+                        <h4 className='font-black text-foreground text-lg'>{review.user.name}</h4>
                         <div className='flex items-center gap-2 mt-1'>
                           <div className='flex gap-0.5'>
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
                                 className={cn(
-                                  'h-4 w-4',
-                                  i < review.ratings
-                                    ? 'fill-primary text-primary'
-                                    : 'text-muted-foreground/30'
+                                  'h-3.5 w-3.5',
+                                  i < review.ratings ? 'fill-yellow-400 text-yellow-400' : 'text-muted/20'
                                 )}
                               />
                             ))}
                           </div>
-                          <Badge variant='secondary' className='text-[10px]'>
-                            {review.ratings}/5
+                          <Badge variant='secondary' className='text-[9px] h-5 rounded-full px-2 font-bold'>
+                            تحقق من الشراء
                           </Badge>
                         </div>
                       </div>
-                      <span className='text-[11px] text-muted-foreground'>
-                        {new Date(review.createdAt).toLocaleDateString('ar-EG')}
+                      <span className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-background px-3 py-1 rounded-full border border-border w-fit'>
+                        {new Date(review.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </span>
                     </div>
+                    
                     {review.title && (
-                      <p className='text-foreground/80 text-sm leading-relaxed bg-muted/50 p-3 rounded-lg'>
+                      <p className='text-foreground/80 text-sm md:text-base leading-relaxed font-medium'>
                         {review.title}
                       </p>
                     )}
@@ -198,6 +188,7 @@ export function ProductReviews({ reviews, productId }: ProductReviewsProps) {
           )}
         </div>
       </div>
+
       <AddReviewDialog
         productId={productId}
         open={showAddReview}

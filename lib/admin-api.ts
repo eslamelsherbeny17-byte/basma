@@ -73,6 +73,20 @@ function logFormData(formData: FormData) {
   })
 }
 
+// ⭐ Helper: Normalize Response
+function normalizeResponse(response: any) {
+  // إذا البيانات في response.data.data
+  if (response.data?.data) {
+    return response.data
+  }
+  // إذا البيانات في response.data مباشرة
+  if (response.data) {
+    return { data: response.data }
+  }
+  // Fallback
+  return { data: response }
+}
+
 // ==================== DASHBOARD API ====================
 export const adminDashboardAPI = {
   getStats: async () => {
@@ -91,17 +105,20 @@ export const adminDashboardAPI = {
             adminAPI.get('/users').catch(() => ({ data: { data: [] } })),
           ])
 
-          const totalRevenue =
-            orders.data.data?.reduce(
-              (sum: number, o: any) => sum + (o.totalOrderPrice || 0),
-              0
-            ) || 0
+          const ordersData = orders.data.data || orders.data || []
+          const productsData = products.data.data || products.data || []
+          const usersData = users.data.data || users.data || []
+
+          const totalRevenue = ordersData.reduce(
+            (sum: number, o: any) => sum + (o.totalOrderPrice || 0),
+            0
+          )
 
           return {
             totalRevenue,
-            totalOrders: orders.data.data?.length || 0,
-            totalProducts: products.data.data?.length || 0,
-            totalUsers: users.data.data?.length || 0,
+            totalOrders: ordersData.length,
+            totalProducts: productsData.length,
+            totalUsers: usersData.length,
             trends: {
               revenue: { value: 0, isPositive: true },
               orders: { value: 0, isPositive: true },
@@ -134,7 +151,7 @@ export const adminDashboardAPI = {
       const response = await adminAPI.get('/orders', {
         params: { limit, sort: '-createdAt' },
       })
-      return response.data
+      return normalizeResponse(response)
     } catch (error) {
       console.error('Recent orders error:', error)
       return { data: [] }
@@ -146,7 +163,7 @@ export const adminDashboardAPI = {
       const response = await adminAPI.get('/products', {
         params: { limit, sort: '-sold' },
       })
-      return response.data
+      return normalizeResponse(response)
     } catch (error) {
       console.error('Top products error:', error)
       return { data: [] }
@@ -158,12 +175,19 @@ export const adminDashboardAPI = {
 export const adminProductsAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/products', { params })
-    return response.data
+    return normalizeResponse(response)
   },
 
   getById: async (id: string) => {
+    console.log('🔍 Fetching product by ID:', id)
     const response = await adminAPI.get(`/products/${id}`)
-    return response.data
+    console.log('📦 Raw response:', response.data)
+    
+    // ⭐ دعم كلا الحالتين
+    const normalized = normalizeResponse(response)
+    console.log('✅ Normalized data:', normalized.data)
+    
+    return normalized.data
   },
 
   create: async (formData: FormData) => {
@@ -171,7 +195,7 @@ export const adminProductsAPI = {
     const response = await adminAPI.post('/products', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    return response.data
+    return normalizeResponse(response)
   },
 
   update: async (id: string, formData: FormData) => {
@@ -179,7 +203,7 @@ export const adminProductsAPI = {
     const response = await adminAPI.put(`/products/${id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    return response.data
+    return normalizeResponse(response)
   },
 
   delete: async (id: string) => {
@@ -192,7 +216,7 @@ export const adminProductsAPI = {
 export const adminCategoriesAPI = {
   getAll: async () => {
     const response = await adminAPI.get('/categories')
-    return response.data
+    return normalizeResponse(response)
   },
 
   create: async (data: FormData) => {
@@ -200,7 +224,7 @@ export const adminCategoriesAPI = {
     const response = await adminAPI.post('/categories', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    return response.data
+    return normalizeResponse(response)
   },
 
   update: async (id: string, data: FormData) => {
@@ -208,7 +232,7 @@ export const adminCategoriesAPI = {
     const response = await adminAPI.put(`/categories/${id}`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    return response.data
+    return normalizeResponse(response)
   },
 
   delete: async (id: string) => {
@@ -221,24 +245,24 @@ export const adminCategoriesAPI = {
 export const adminSubCategoriesAPI = {
   getAll: async () => {
     const response = await adminAPI.get('/subcategories')
-    return response.data
+    return normalizeResponse(response)
   },
 
   getByCategoryId: async (categoryId: string) => {
     const response = await adminAPI.get(
       `/categories/${categoryId}/subcategories`
     )
-    return response.data
+    return normalizeResponse(response)
   },
 
   create: async (data: any) => {
     const response = await adminAPI.post('/subcategories', data)
-    return response.data
+    return normalizeResponse(response)
   },
 
   update: async (id: string, data: any) => {
     const response = await adminAPI.put(`/subcategories/${id}`, data)
-    return response.data
+    return normalizeResponse(response)
   },
 
   delete: async (id: string) => {
@@ -251,7 +275,7 @@ export const adminSubCategoriesAPI = {
 export const adminBrandsAPI = {
   getAll: async () => {
     const response = await adminAPI.get('/brands')
-    return response.data
+    return normalizeResponse(response)
   },
 
   create: async (data: FormData) => {
@@ -259,7 +283,7 @@ export const adminBrandsAPI = {
     const response = await adminAPI.post('/brands', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    return response.data
+    return normalizeResponse(response)
   },
 
   update: async (id: string, data: FormData) => {
@@ -267,7 +291,7 @@ export const adminBrandsAPI = {
     const response = await adminAPI.put(`/brands/${id}`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    return response.data
+    return normalizeResponse(response)
   },
 
   delete: async (id: string) => {
@@ -278,29 +302,30 @@ export const adminBrandsAPI = {
 
 // ==================== ORDERS API ====================
 export const adminOrdersAPI = {
-  getAll: async (params?: any) => {
+ getAll: async (params?: any) => {
     const response = await adminAPI.get('/orders', { params })
-    return response.data
+    return normalizeResponse(response)
   },
 
   getById: async (id: string) => {
+    // نطلب البيانات ونترك المعالجة للمكون لضمان الوصول لأعمق مستوى
     const response = await adminAPI.get(`/orders/${id}`)
-    return response.data
+    return response.data; // نعيد الـ data الخام ليقوم المكون بفحصها
   },
 
   updateStatus: async (id: string, status: string) => {
     const response = await adminAPI.put(`/orders/${id}`, { status })
-    return response.data
+    return normalizeResponse(response)
   },
 
   updatePaidStatus: async (id: string) => {
     const response = await adminAPI.put(`/orders/${id}/pay`)
-    return response.data
+    return normalizeResponse(response)
   },
 
   updateDeliveredStatus: async (id: string) => {
     const response = await adminAPI.put(`/orders/${id}/deliver`)
-    return response.data
+    return normalizeResponse(response)
   },
 
   delete: async (id: string) => {
@@ -313,17 +338,17 @@ export const adminOrdersAPI = {
 export const adminUsersAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/users', { params })
-    return response.data
+    return normalizeResponse(response)
   },
 
   getById: async (id: string) => {
     const response = await adminAPI.get(`/users/${id}`)
-    return response.data
+    return normalizeResponse(response).data
   },
 
   update: async (id: string, data: any) => {
     const response = await adminAPI.put(`/users/${id}`, data)
-    return response.data
+    return normalizeResponse(response)
   },
 
   delete: async (id: string) => {
@@ -333,7 +358,7 @@ export const adminUsersAPI = {
 
   changeRole: async (id: string, role: string) => {
     const response = await adminAPI.put(`/users/changeUserRole/${id}`, { role })
-    return response.data
+    return normalizeResponse(response)
   },
 }
 
@@ -341,7 +366,7 @@ export const adminUsersAPI = {
 export const adminReviewsAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/reviews', { params })
-    return response.data
+    return normalizeResponse(response)
   },
 
   delete: async (id: string) => {
@@ -351,7 +376,7 @@ export const adminReviewsAPI = {
 
   approve: async (id: string) => {
     const response = await adminAPI.put(`/reviews/${id}/approve`)
-    return response.data
+    return normalizeResponse(response)
   },
 }
 

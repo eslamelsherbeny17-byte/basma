@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, Upload, Trash2, Tag, DollarSign } from 'lucide-react'
+import { Download, Trash2, Tag, DollarSign, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog'
 import {
@@ -36,9 +35,7 @@ export function BulkOperations({
   const [isUpdateStockOpen, setIsUpdateStockOpen] = useState(false)
   const [priceValue, setPriceValue] = useState('')
   const [stockValue, setStockValue] = useState('')
-  const [priceType, setPriceType] = useState<'increase' | 'decrease' | 'set'>(
-    'set'
-  )
+  const [priceType, setPriceType] = useState<'increase' | 'decrease' | 'set'>('set')
 
   if (selectedProducts.length === 0) return null
 
@@ -55,86 +52,112 @@ export function BulkOperations({
 
   const handleUpdatePrice = () => {
     if (!priceValue) return
-
-    onBulkUpdate('updatePrice', {
-      type: priceType,
-      value: parseFloat(priceValue),
-    })
+    onBulkUpdate('updatePrice', { type: priceType, value: parseFloat(priceValue) })
     setIsUpdatePriceOpen(false)
     setPriceValue('')
   }
 
   const handleUpdateStock = () => {
     if (!stockValue) return
-
     onBulkUpdate('updateStock', parseInt(stockValue))
     setIsUpdateStockOpen(false)
     setStockValue('')
   }
 
   return (
-    <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-50'>
-      <div className='bg-primary text-white rounded-full shadow-2xl px-6 py-4 flex items-center gap-4'>
-        <span className='font-semibold'>
-          تم تحديد {selectedProducts.length} منتج
-        </span>
+    <>
+      {/* Desktop Version */}
+      <div className='hidden md:block fixed bottom-6 left-1/2 -translate-x-1/2 z-50'>
+        <div className='bg-primary text-white rounded-full shadow-2xl px-6 py-4 flex items-center gap-4'>
+          <span className='font-semibold'>
+            تم تحديد {selectedProducts.length} منتج
+          </span>
 
-        <div className='h-6 w-px bg-white/30' />
+          <div className='h-6 w-px bg-white/30' />
 
-        {/* Bulk Actions Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='secondary' size='sm'>
-              عمليات جماعية
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='secondary' size='sm'>
+                عمليات جماعية
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end' className='w-56'>
+              <DropdownMenuItem onSelect={() => setIsUpdatePriceOpen(true)}>
+                <DollarSign className='ml-2 h-4 w-4' />
+                تحديث الأسعار
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onSelect={() => setIsUpdateStockOpen(true)}>
+                <Tag className='ml-2 h-4 w-4' />
+                تحديث المخزون
+              </DropdownMenuItem>
+
+              <DropdownMenuItem>
+                <Download className='ml-2 h-4 w-4' />
+                تصدير المحددة
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                className='text-destructive focus:text-destructive'
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className='ml-2 h-4 w-4' />
+                حذف المحددة
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button variant='ghost' size='sm' onClick={onClearSelection}>
+            <X className='h-4 w-4' />
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile Version */}
+      <div className='md:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-background border-t shadow-lg'>
+        <div className='space-y-3'>
+          <div className='flex items-center justify-between'>
+            <span className='font-semibold text-sm'>
+              {selectedProducts.length} محدد
+            </span>
+            <Button variant='ghost' size='sm' onClick={onClearSelection}>
+              <X className='h-4 w-4' />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end' className='w-56'>
-            <Dialog
-              open={isUpdatePriceOpen}
-              onOpenChange={setIsUpdatePriceOpen}
+          </div>
+          <div className='grid grid-cols-2 gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setIsUpdatePriceOpen(true)}
             >
-              <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <DollarSign className='ml-2 h-4 w-4' />
-                  تحديث الأسعار
-                </DropdownMenuItem>
-              </DialogTrigger>
-            </Dialog>
-
-            <Dialog
-              open={isUpdateStockOpen}
-              onOpenChange={setIsUpdateStockOpen}
+              <DollarSign className='ml-2 h-3 w-3' />
+              الأسعار
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setIsUpdateStockOpen(true)}
             >
-              <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Tag className='ml-2 h-4 w-4' />
-                  تحديث المخزون
-                </DropdownMenuItem>
-              </DialogTrigger>
-            </Dialog>
+              <Tag className='ml-2 h-3 w-3' />
+              المخزون
+            </Button>
+          </div>
+          <Button
+            variant='destructive'
+            size='sm'
+            className='w-full'
+            onClick={handleBulkDelete}
+          >
+            <Trash2 className='ml-2 h-3 w-3' />
+            حذف المحددة
+          </Button>
+        </div>
+      </div>
 
-            <DropdownMenuItem>
-              <Download className='ml-2 h-4 w-4' />
-              تصدير المحددة
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              onClick={handleBulkDelete}
-            >
-              <Trash2 className='ml-2 h-4 w-4' />
-              حذف المحددة
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button variant='ghost' size='sm' onClick={onClearSelection}>
-          إلغاء
-        </Button>
-
-        {/* Update Price Dialog */}
+      {/* Update Price Dialog */}
+      <Dialog open={isUpdatePriceOpen} onOpenChange={setIsUpdatePriceOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>تحديث الأسعار الجماعي</DialogTitle>
@@ -149,18 +172,21 @@ export function BulkOperations({
                 <Button
                   variant={priceType === 'set' ? 'default' : 'outline'}
                   onClick={() => setPriceType('set')}
+                  size='sm'
                 >
                   تعيين
                 </Button>
                 <Button
                   variant={priceType === 'increase' ? 'default' : 'outline'}
                   onClick={() => setPriceType('increase')}
+                  size='sm'
                 >
                   زيادة
                 </Button>
                 <Button
                   variant={priceType === 'decrease' ? 'default' : 'outline'}
                   onClick={() => setPriceType('decrease')}
+                  size='sm'
                 >
                   تخفيض
                 </Button>
@@ -189,8 +215,10 @@ export function BulkOperations({
             </Button>
           </div>
         </DialogContent>
+      </Dialog>
 
-        {/* Update Stock Dialog */}
+      {/* Update Stock Dialog */}
+      <Dialog open={isUpdateStockOpen} onOpenChange={setIsUpdateStockOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>تحديث المخزون الجماعي</DialogTitle>
@@ -215,7 +243,7 @@ export function BulkOperations({
             </Button>
           </div>
         </DialogContent>
-      </div>
-    </div>
+      </Dialog>
+    </>
   )
 }

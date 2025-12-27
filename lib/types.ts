@@ -7,6 +7,8 @@ export interface Product {
   slug: string
   description: string
   quantity: number
+  titleEn?: string;     
+  descriptionEn?: string;
   sold: number
   price: number
   priceAfterDiscount?: number

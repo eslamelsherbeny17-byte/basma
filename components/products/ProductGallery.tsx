@@ -9,29 +9,52 @@ import { useLanguage } from "@/contexts/LanguageContext"
 
 export function ProductGallery({ images, title }: { images: string[], title: string }) {
   const [selectedImage, setSelectedImage] = useState(0)
-  const { t } = useLanguage()
-
-  const nextImage = () => setSelectedImage((prev) => (prev + 1) % images.length)
-  const prevImage = () => setSelectedImage((prev) => (prev - 1 + images.length) % images.length)
 
   return (
-    <div className='space-y-4'>
-      <div className='relative aspect-[3/4] bg-muted rounded-lg overflow-hidden group border border-border'>
-        <Image src={getImageUrl(images[selectedImage])} alt={title} fill className='object-cover' priority />
+    <div className='flex flex-col gap-4'>
+      {/* Main Image Container */}
+      <div className='relative aspect-square md:aspect-[4/5] bg-card rounded-3xl overflow-hidden border border-border shadow-inner group'>
+        <Image 
+          src={getImageUrl(images[selectedImage])} 
+          alt={title} 
+          fill 
+          className='object-contain md:object-cover transition-all duration-500' 
+          priority 
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
+        
+        {/* Navigation Arrows - تظهر بوضوح في الموبايل */}
         {images.length > 1 && (
-          <>
-            <Button variant='secondary' size='icon' className='absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-background/50 backdrop-blur-sm' onClick={prevImage}>
-              <ChevronLeft className='h-4 w-4' />
+          <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
+            <Button 
+              variant='secondary' size='icon' 
+              className='h-10 w-10 rounded-full bg-background/80 backdrop-blur-md shadow-lg pointer-events-auto opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all'
+              onClick={() => setSelectedImage((prev) => (prev - 1 + images.length) % images.length)}
+            >
+              <ChevronRight className='h-6 w-6' />
             </Button>
-            <Button variant='secondary' size='icon' className='absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-background/50 backdrop-blur-sm' onClick={nextImage}>
-              <ChevronRight className='h-4 w-4' />
+            <Button 
+              variant='secondary' size='icon' 
+              className='h-10 w-10 rounded-full bg-background/80 backdrop-blur-md shadow-lg pointer-events-auto opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all'
+              onClick={() => setSelectedImage((prev) => (prev + 1) % images.length)}
+            >
+              <ChevronLeft className='h-6 w-6' />
             </Button>
-          </>
+          </div>
         )}
       </div>
-      <div className='grid grid-cols-4 gap-2'>
+
+      {/* Thumbnails - تمرير أفقي للموبايل */}
+      <div className='flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x'>
         {images.map((image, index) => (
-          <button key={index} onClick={() => setSelectedImage(index)} className={cn('relative aspect-square rounded-lg overflow-hidden border-2 transition-all', selectedImage === index ? 'border-primary' : 'border-transparent hover:border-border')}>
+          <button 
+            key={index} 
+            onClick={() => setSelectedImage(index)} 
+            className={cn(
+              'relative h-20 w-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all snap-start',
+              selectedImage === index ? 'border-primary shadow-md' : 'border-transparent hover:border-muted-foreground/30'
+            )}
+          >
             <Image src={getImageUrl(image)} alt={`${title} ${index}`} fill className='object-cover' />
           </button>
         ))}

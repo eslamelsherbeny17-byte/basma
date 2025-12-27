@@ -1,96 +1,118 @@
-"use client"
+'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
-import { useLanguage } from "@/contexts/LanguageContext"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts'
 
-export function SalesChart() {
-  const { language } = useLanguage()
+interface SalesChartProps {
+  data?: Array<{
+    name: string
+    sales: number
+    orders: number
+  }>
+}
 
-  const data = [
-    {
-      name: language === "ar" ? "يناير" : "January",
-      sales: 4000,
-      orders: 240,
-    },
-    {
-      name: language === "ar" ? "فبراير" : "February",
-      sales: 3000,
-      orders: 198,
-    },
-    {
-      name: language === "ar" ? "مارس" : "March",
-      sales: 2000,
-      orders: 180,
-    },
-    {
-      name: language === "ar" ? "أبريل" : "April",
-      sales: 2780,
-      orders: 208,
-    },
-    {
-      name: language === "ar" ? "مايو" : "May",
-      sales: 1890,
-      orders: 181,
-    },
-    {
-      name: language === "ar" ? "يونيو" : "June",
-      sales: 2390,
-      orders: 250,
-    },
-    {
-      name: language === "ar" ? "يوليو" : "July",
-      sales: 3490,
-      orders: 210,
-    },
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className='bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-3'>
+        <p className='font-semibold mb-2'>{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className='text-sm flex items-center gap-2'>
+            <span
+              className='w-3 h-3 rounded-full'
+              style={{ backgroundColor: entry.color }}
+            />
+            {entry.name}: {entry.value.toLocaleString('ar-EG')}
+          </p>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
+
+export function SalesChart({ data }: SalesChartProps) {
+  const defaultData = [
+    { name: 'يناير', sales: 4000, orders: 240 },
+    { name: 'فبراير', sales: 3000, orders: 198 },
+    { name: 'مارس', sales: 5000, orders: 280 },
+    { name: 'أبريل', sales: 2780, orders: 208 },
+    { name: 'مايو', sales: 4890, orders: 281 },
+    { name: 'يونيو', sales: 6390, orders: 350 },
+    { name: 'يوليو', sales: 7490, orders: 410 },
   ]
 
+  const chartData = data || defaultData
+
   return (
-    <Card className="bg-card dark:bg-gray-800 border-border dark:border-gray-700">
-      <CardHeader>
-        <CardTitle className="text-foreground dark:text-white">
-          {language === "ar" ? "المبيعات الشهرية" : "Monthly Sales"}
+    <Card className='border-0 shadow-lg overflow-hidden'>
+      <CardHeader className='border-b bg-gradient-to-r from-primary/5 to-primary/10'>
+        <CardTitle className='text-lg md:text-xl flex items-center gap-2'>
+          📈 المبيعات والطلبات
         </CardTitle>
+        <p className='text-sm text-muted-foreground'>آخر 7 أشهر</p>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" style={{ fontSize: "12px" }} />
-            <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: "12px" }} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--popover))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "0.5rem",
-              }}
-              labelStyle={{ color: "hsl(var(--foreground))" }}
+      <CardContent className='pt-6'>
+        <ResponsiveContainer width='100%' height={350}>
+          <AreaChart data={chartData}>
+            <defs>
+              <linearGradient id='colorSales' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='5%' stopColor='#8B5CF6' stopOpacity={0.8} />
+                <stop offset='95%' stopColor='#8B5CF6' stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id='colorOrders' x1='0' y1='0' x2='0' y2='1'>
+                <stop offset='5%' stopColor='#10B981' stopOpacity={0.8} />
+                <stop offset='95%' stopColor='#10B981' stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' opacity={0.2} />
+            <XAxis
+              dataKey='name'
+              stroke='hsl(var(--muted-foreground))'
+              style={{ fontSize: '12px' }}
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
             />
+            <YAxis
+              stroke='hsl(var(--muted-foreground))'
+              style={{ fontSize: '12px' }}
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <Tooltip content={<CustomTooltip />} />
             <Legend
               wrapperStyle={{
-                paddingTop: "20px",
-                fontSize: "14px",
+                paddingTop: '20px',
+                fontSize: '14px',
               }}
+              iconType='circle'
             />
-            <Line
-              type="monotone"
-              dataKey="sales"
-              stroke="#8B5CF6"
-              strokeWidth={2}
-              name={language === "ar" ? "المبيعات (جنيه)" : "Sales (EGP)"}
-              dot={{ fill: "#8B5CF6", r: 4 }}
-              activeDot={{ r: 6 }}
+            <Area
+              type='monotone'
+              dataKey='sales'
+              stroke='#8B5CF6'
+              strokeWidth={3}
+              fillOpacity={1}
+              fill='url(#colorSales)'
+              name='المبيعات (جنيه)'
             />
-            <Line
-              type="monotone"
-              dataKey="orders"
-              stroke="#10B981"
-              strokeWidth={2}
-              name={language === "ar" ? "الطلبات" : "Orders"}
-              dot={{ fill: "#10B981", r: 4 }}
-              activeDot={{ r: 6 }}
+            <Area
+              type='monotone'
+              dataKey='orders'
+              stroke='#10B981'
+              strokeWidth={3}
+              fillOpacity={1}
+              fill='url(#colorOrders)'
+              name='عدد الطلبات'
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

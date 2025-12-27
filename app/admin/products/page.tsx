@@ -11,6 +11,10 @@ import {
   Trash2,
   Eye,
   Loader2,
+  Filter,
+  Download,
+  Grid3x3,
+  List,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,24 +56,20 @@ import {
 import { adminProductsAPI } from '@/lib/admin-api'
 import { formatPrice, getImageUrl } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface Product {
   _id: string
   title: string
+  titleAr?: string
   description: string
   price: number
   priceAfterDiscount?: number
   quantity: number
   sold: number
   imageCover: string
-  category?: {
-    _id: string
-    name: string
-  } | null
-  brand?: {
-    _id: string
-    name: string
-  } | null
+  category?: { _id: string; name: string } | null
+  brand?: { _id: string; name: string } | null
   ratingsAverage: number
   ratingsQuantity: number
   createdAt: string
@@ -81,9 +81,11 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('newest')
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([])
 
   useEffect(() => {
     fetchProducts()
@@ -94,7 +96,6 @@ export default function ProductsPage() {
       setLoading(true)
       const params: any = {}
 
-      // Sorting logic
       if (sortBy === 'newest') params.sort = '-createdAt'
       if (sortBy === 'oldest') params.sort = 'createdAt'
       if (sortBy === 'price-low') params.sort = 'price'
@@ -127,7 +128,7 @@ export default function ProductsPage() {
     try {
       await adminProductsAPI.delete(productToDelete)
       toast({
-        title: 'تم الحذف',
+        title: '✅ تم الحذف',
         description: 'تم حذف المنتج بنجاح',
       })
       fetchProducts()
@@ -144,24 +145,41 @@ export default function ProductsPage() {
     }
   }
 
+  const handleSelectProduct = (productId: string) => {
+    setSelectedProducts((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([])
+    } else {
+      setSelectedProducts(filteredProducts.map((p) => p._id))
+    }
+  }
+
   const filteredProducts = products.filter(
     (product) =>
       product.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.titleAr?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4 md:space-y-6'>
       {/* Header Section */}
-      <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <h1 className='text-3xl font-bold'>المنتجات</h1>
-          <p className='text-muted-foreground mt-1'>
+          <h1 className='text-2xl md:text-3xl font-bold'>المنتجات</h1>
+          <p className='text-sm text-muted-foreground mt-1'>
             إدارة منتجات المتجر ({products.length} منتج)
           </p>
         </div>
-        <Link href='/admin/products/new'>
-          <Button className='gold-gradient'>
+        <Link href='/admin/products/new' className='w-full sm:w-auto'>
+          <Button className='w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70'>
             <Plus className='ml-2 h-4 w-4' />
             إضافة منتج جديد
           </Button>
@@ -171,9 +189,9 @@ export default function ProductsPage() {
       {/* Filters Section */}
       <Card>
         <CardContent className='p-4'>
-          <div className='flex flex-col md:flex-row gap-4'>
+          <div className='flex flex-col gap-3 md:flex-row md:items-center'>
             {/* Search */}
-            <div className='flex-1 relative'>
+            <div className='relative flex-1'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
               <Input
                 placeholder='البحث عن منتج...'
@@ -183,7 +201,7 @@ export default function ProductsPage() {
               />
             </div>
 
-            {/* Sort Dropdown */}
+            {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className='w-full md:w-[200px]'>
                 <SelectValue placeholder='ترتيب حسب' />
@@ -196,16 +214,41 @@ export default function ProductsPage() {
                 <SelectItem value='name'>الاسم</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* View Toggle - Hidden on Mobile */}
+            <div className='hidden md:flex gap-1 border rounded-lg p-1'>
+              <Button
+                variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                size='sm'
+                onClick={() => setViewMode('table')}
+              >
+                <List className='h-4 w-4' />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                size='sm'
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3x3 className='h-4 w-4' />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Table Section */}
+      {/* Products List */}
       <Card>
-        <CardHeader>
-          <CardTitle>جميع المنتجات</CardTitle>
+        <CardHeader className='border-b'>
+          <div className='flex items-center justify-between'>
+            <CardTitle className='text-lg md:text-xl'>جميع المنتجات</CardTitle>
+            {selectedProducts.length > 0 && (
+              <Badge variant='secondary' className='text-sm'>
+                {selectedProducts.length} محدد
+              </Badge>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className='p-0'>
           {loading ? (
             <div className='flex items-center justify-center py-12'>
               <Loader2 className='h-8 w-8 animate-spin text-primary' />
@@ -214,21 +257,21 @@ export default function ProductsPage() {
             <div className='text-center py-12'>
               <p className='text-muted-foreground'>لا توجد منتجات</p>
             </div>
-          ) : (
-            <div className='overflow-x-auto'>
+          ) : viewMode === 'table' ? (
+            // Table View (Desktop)
+            <div className='hidden md:block overflow-x-auto'>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {/* 👇 1. الصورة والاسم يمين */}
-                    <TableHead className='w-[80px] text-right'>
-                      الصورة
+                    <TableHead className='w-[50px] text-right'>
+                      <Checkbox
+                        checked={selectedProducts.length === filteredProducts.length}
+                        onCheckedChange={handleSelectAll}
+                      />
                     </TableHead>
+                    <TableHead className='w-[80px] text-right'>الصورة</TableHead>
                     <TableHead className='text-right'>المنتج</TableHead>
-
-                    {/* 👇 2. الفئة في النص (تم التعديل) */}
                     <TableHead className='text-center'>الفئة</TableHead>
-
-                    {/* 👇 3. باقي الأرقام في النص */}
                     <TableHead className='text-center'>السعر</TableHead>
                     <TableHead className='text-center'>الكمية</TableHead>
                     <TableHead className='text-center'>المبيعات</TableHead>
@@ -240,9 +283,14 @@ export default function ProductsPage() {
                 <TableBody>
                   {filteredProducts.map((product) => (
                     <TableRow key={product._id}>
-                      {/* Image - Right Aligned */}
                       <TableCell className='text-right'>
-                        <div className='relative w-16 h-16 rounded-lg overflow-hidden bg-secondary inline-block'>
+                        <Checkbox
+                          checked={selectedProducts.includes(product._id)}
+                          onCheckedChange={() => handleSelectProduct(product._id)}
+                        />
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        <div className='relative w-16 h-16 rounded-lg overflow-hidden bg-secondary'>
                           <Image
                             src={getImageUrl(product.imageCover)}
                             alt={product.title}
@@ -251,32 +299,22 @@ export default function ProductsPage() {
                           />
                         </div>
                       </TableCell>
-
-                      {/* Title - Right Aligned */}
                       <TableCell className='text-right'>
-                        <div className='font-medium'>{product.title}</div>
+                        <div className='font-medium'>{product.titleAr || product.title}</div>
                         <div className='text-sm text-muted-foreground line-clamp-1'>
-                          {product.description}
+                          {product.title}
                         </div>
                       </TableCell>
-
-                      {/* 👇 2. Category - Center Aligned (تم التعديل) */}
                       <TableCell className='text-center'>
                         {product.category ? (
-                          <Badge variant='secondary'>
-                            {product.category.name}
-                          </Badge>
+                          <Badge variant='secondary'>{product.category.name}</Badge>
                         ) : (
                           <Badge variant='outline'>غير محدد</Badge>
                         )}
                       </TableCell>
-
-                      {/* Price - Center Aligned */}
                       <TableCell className='text-center'>
                         <div className='font-semibold'>
-                          {formatPrice(
-                            product.priceAfterDiscount || product.price
-                          )}
+                          {formatPrice(product.priceAfterDiscount || product.price)}
                         </div>
                         {product.priceAfterDiscount && (
                           <div className='text-sm text-muted-foreground line-through'>
@@ -284,51 +322,27 @@ export default function ProductsPage() {
                           </div>
                         )}
                       </TableCell>
-
-                      {/* Quantity - Center Aligned */}
                       <TableCell className='text-center'>
-                        <Badge
-                          variant={
-                            product.quantity > 10 ? 'default' : 'destructive'
-                          }
-                        >
+                        <Badge variant={product.quantity > 10 ? 'default' : 'destructive'}>
                           {product.quantity}
                         </Badge>
                       </TableCell>
-
-                      {/* Sold - Center Aligned */}
-                      <TableCell className='text-center'>
-                        {product.sold || 0}
-                      </TableCell>
-
-                      {/* Rating - Center Aligned + Flex Center */}
+                      <TableCell className='text-center'>{product.sold || 0}</TableCell>
                       <TableCell className='text-center'>
                         <div className='flex items-center justify-center gap-1'>
                           <span className='text-yellow-500'>★</span>
                           <span className='font-medium'>
                             {product.ratingsAverage?.toFixed(1) || '0.0'}
                           </span>
-                          <span className='text-sm text-muted-foreground'>
-                            ({product.ratingsQuantity || 0})
-                          </span>
                         </div>
                       </TableCell>
-
-                      {/* Status - Center Aligned */}
                       <TableCell className='text-center'>
                         {product.quantity > 0 ? (
-                          <Badge
-                            variant='default'
-                            className='bg-green-500 hover:bg-green-600'
-                          >
-                            متوفر
-                          </Badge>
+                          <Badge className='bg-green-500 hover:bg-green-600'>متوفر</Badge>
                         ) : (
                           <Badge variant='destructive'>نفذ</Badge>
                         )}
                       </TableCell>
-
-                      {/* Actions - Left Aligned */}
                       <TableCell className='text-left'>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -336,12 +350,7 @@ export default function ProductsPage() {
                               <MoreVertical className='h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
-
-                          {/* 👇 4. حل مشكلة القائمة الشفافة بإضافة خلفية وحدود */}
-                          <DropdownMenuContent
-                            align='end'
-                            className='bg-white border shadow-lg z-50'
-                          >
+                          <DropdownMenuContent align='end' className='bg-card border shadow-lg'>
                             <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
@@ -351,9 +360,7 @@ export default function ProductsPage() {
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link
-                                href={`/admin/products/${product._id}/edit`}
-                              >
+                              <Link href={`/admin/products/${product._id}/edit`}>
                                 <Edit className='ml-2 h-4 w-4' />
                                 تعديل
                               </Link>
@@ -374,7 +381,95 @@ export default function ProductsPage() {
                 </TableBody>
               </Table>
             </div>
-          )}
+          ) : null}
+
+          {/* Mobile Card View */}
+          <div className='md:hidden divide-y'>
+            {filteredProducts.map((product) => (
+              <div key={product._id} className='p-4 hover:bg-accent/50 transition-colors'>
+                <div className='flex gap-3'>
+                  {/* Checkbox */}
+                  <Checkbox
+                    checked={selectedProducts.includes(product._id)}
+                    onCheckedChange={() => handleSelectProduct(product._id)}
+                    className='mt-1'
+                  />
+
+                  {/* Image */}
+                  <div className='relative w-20 h-20 rounded-lg overflow-hidden bg-secondary flex-shrink-0'>
+                    <Image
+                      src={getImageUrl(product.imageCover)}
+                      alt={product.title}
+                      fill
+                      className='object-cover'
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className='flex-1 min-w-0'>
+                    <h3 className='font-semibold text-sm line-clamp-1'>
+                      {product.titleAr || product.title}
+                    </h3>
+                    <p className='text-xs text-muted-foreground line-clamp-1 mb-2'>
+                      {product.title}
+                    </p>
+
+                    <div className='flex items-center gap-2 flex-wrap mb-2'>
+                      <Badge variant='secondary' className='text-xs'>
+                        {product.category?.name || 'غير محدد'}
+                      </Badge>
+                      <Badge variant={product.quantity > 0 ? 'default' : 'destructive'} className='text-xs'>
+                        {product.quantity > 0 ? 'متوفر' : 'نفذ'}
+                      </Badge>
+                    </div>
+
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <p className='font-bold text-primary text-sm'>
+                          {formatPrice(product.priceAfterDiscount || product.price)}
+                        </p>
+                        {product.priceAfterDiscount && (
+                          <p className='text-xs text-muted-foreground line-through'>
+                            {formatPrice(product.price)}
+                          </p>
+                        )}
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant='ghost' size='icon' className='h-8 w-8'>
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end' className='bg-card'>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/product/${product._id}`}>
+                              <Eye className='ml-2 h-4 w-4' />
+                              عرض
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/products/${product._id}/edit`}>
+                              <Edit className='ml-2 h-4 w-4' />
+                              تعديل
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className='text-red-600'
+                            onClick={() => handleDeleteClick(product._id)}
+                          >
+                            <Trash2 className='ml-2 h-4 w-4' />
+                            حذف
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -384,8 +479,7 @@ export default function ProductsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
             <AlertDialogDescription>
-              لن تتمكن من التراجع عن هذا الإجراء. سيتم حذف المنتج نهائياً من
-              قاعدة البيانات.
+              لن تتمكن من التراجع عن هذا الإجراء. سيتم حذف المنتج نهائياً من قاعدة البيانات.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

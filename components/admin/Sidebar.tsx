@@ -12,147 +12,119 @@ import {
   Tags,
   Settings,
   LogOut,
-  Menu,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const menuItems = [
-  {
-    title: 'لوحة التحكم',
-    href: '/admin',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'المنتجات',
-    href: '/admin/products',
-    icon: Package,
-  },
-  {
-    title: 'الفئات',
-    href: '/admin/categories',
-    icon: FolderTree,
-  },
-  {
-    title: 'الطلبات',
-    href: '/admin/orders',
-    icon: ShoppingCart,
-  },
-  {
-    title: 'المستخدمين',
-    href: '/admin/users',
-    icon: Users,
-  },
-  {
-    title: 'التقييمات',
-    href: '/admin/reviews',
-    icon: Star,
-  },
-  {
-    title: 'الماركات',
-    href: '/admin/brands',
-    icon: Tags,
-  },
-  {
-    title: 'الإعدادات',
-    href: '/admin/settings',
-    icon: Settings,
-  },
+  { title: 'لوحة التحكم', href: '/admin', icon: LayoutDashboard },
+  { title: 'المنتجات', href: '/admin/products', icon: Package },
+  { title: 'الفئات', href: '/admin/categories', icon: FolderTree },
+  { title: 'الطلبات', href: '/admin/orders', icon: ShoppingCart },
+  { title: 'المستخدمين', href: '/admin/users', icon: Users },
+  { title: 'التقييمات', href: '/admin/reviews', icon: Star },
+  { title: 'الماركات', href: '/admin/brands', icon: Tags },
+  { title: 'الإعدادات', href: '/admin/settings', icon: Settings },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken')
+    localStorage.removeItem('token')
     window.location.href = '/admin/login'
   }
 
   const SidebarContent = () => (
-    <>
-      {/* Logo */}
-      <div className='p-6 border-b'>
-        <Link href='/admin' className='flex items-center gap-2'>
-          <div className='w-10 h-10 rounded-lg bg-primary flex items-center justify-center'>
+    <div className='flex h-full flex-col'>
+      {/* Logo - Hidden on Desktop (shown in mobile) */}
+      <div className='flex h-16 items-center justify-between border-b px-6 lg:justify-center'>
+        <Link href='/admin' className='flex items-center gap-2' onClick={onClose}>
+          <div className='h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg'>
             <LayoutDashboard className='h-6 w-6 text-white' />
           </div>
-          <div>
-            <h2 className='text-xl font-bold text-gold-gradient'>أيمن بشير</h2>
+          <div className='lg:block'>
+            <h2 className='text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent'>
+              أيمن بشير
+            </h2>
             <p className='text-xs text-muted-foreground'>لوحة الإدارة</p>
           </div>
         </Link>
+        {/* Close button for mobile */}
+        <Button
+          variant='ghost'
+          size='icon'
+          className='lg:hidden'
+          onClick={onClose}
+        >
+          <X className='h-5 w-5' />
+        </Button>
       </div>
 
       {/* Menu Items */}
-      <nav className='flex-1 p-4 space-y-1'>
-        {menuItems.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + '/')
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setIsMobileOpen(false)}
-              className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all',
-                isActive
-                  ? 'bg-primary text-white'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-              )}
-            >
-              <item.icon className='h-5 w-5' />
-              <span className='font-medium'>{item.title}</span>
-            </Link>
-          )
-        })}
-      </nav>
+      <ScrollArea className='flex-1 px-3 py-4'>
+        <nav className='space-y-1'>
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all hover:bg-accent',
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <item.icon className='h-5 w-5 flex-shrink-0' />
+                <span>{item.title}</span>
+              </Link>
+            )
+          })}
+        </nav>
+      </ScrollArea>
 
       {/* Logout */}
-      <div className='p-4 border-t'>
+      <div className='border-t p-4'>
         <Button
           variant='ghost'
-          className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+          className='w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive'
           onClick={handleLogout}
         >
           <LogOut className='ml-3 h-5 w-5' />
           تسجيل الخروج
         </Button>
       </div>
-    </>
+    </div>
   )
 
   return (
     <>
-      {/* Mobile Toggle */}
-      <Button
-        variant='outline'
-        size='icon'
-        className='fixed top-4 right-4 z-50 lg:hidden'
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-      >
-        {isMobileOpen ? (
-          <X className='h-5 w-5' />
-        ) : (
-          <Menu className='h-5 w-5' />
-        )}
-      </Button>
-
       {/* Desktop Sidebar */}
-      <aside className='hidden lg:flex lg:flex-col w-72 bg-white border-l h-screen sticky top-0'>
+      <aside className='hidden lg:fixed lg:right-0 lg:top-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-l lg:bg-card'>
         <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar */}
-      {isMobileOpen && (
+      {isOpen && (
         <>
+          {/* Overlay */}
           <div
-            className='fixed inset-0 bg-black/50 z-40 lg:hidden'
-            onClick={() => setIsMobileOpen(false)}
+            className='fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden'
+            onClick={onClose}
           />
-          <aside className='fixed top-0 right-0 bottom-0 w-72 bg-white border-l z-50 lg:hidden flex flex-col'>
+          
+          {/* Sidebar */}
+          <aside className='fixed right-0 top-0 z-50 h-full w-80 max-w-[85vw] border-l bg-card shadow-xl lg:hidden'>
             <SidebarContent />
           </aside>
         </>

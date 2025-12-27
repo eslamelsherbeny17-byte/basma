@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Upload, X, Loader2 } from 'lucide-react'
+import { ArrowRight, Upload, X, Loader2, Save, Plus,Info, LayoutGrid } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,35 +26,39 @@ import Image from 'next/image'
 import VariantsCard from '@/components/admin/VariantsCard'
 import PricingCard from '@/components/admin/PricingCard'
 import { useToast } from '@/hooks/use-toast'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getImageUrl } from '@/lib/utils'
 
-export default function EditProductPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+export default function EditProductPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { toast } = useToast()
+  
   const [loading, setLoading] = useState(false)
-  const [fetchingProduct, setFetchingProduct] = useState(true)
+  const [fetchLoading, setFetchLoading] = useState(true)
+  
+  // البيانات المساعدة
   const [categories, setCategories] = useState<any[]>([])
   const [subCategories, setSubCategories] = useState<any[]>([])
   const [brands, setBrands] = useState<any[]>([])
 
+  // الصور
   const [coverImage, setCoverImage] = useState<File | null>(null)
   const [coverImagePreview, setCoverImagePreview] = useState<string>('')
+  const [existingCoverImage, setExistingCoverImage] = useState<string>('')
   const [additionalImages, setAdditionalImages] = useState<File[]>([])
-  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<
-    string[]
-  >([])
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([])
+  const [existingImages, setExistingImages] = useState<string[]>([])
 
+  // المتغيرات
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
   const [customColorHex, setCustomColorHex] = useState('#000000')
 
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
+    titleAr: '',
+    titleEn: '',
+    descriptionAr: '',
+    descriptionEn: '',
     price: '',
     discount: '',
     quantity: '',
@@ -64,39 +68,32 @@ export default function EditProductPage({
   })
 
   useEffect(() => {
-    fetchInitialData()
+    fetchProduct()
+    fetchCategories()
+    fetchBrands()
   }, [params.id])
 
   useEffect(() => {
     if (formData.category) {
       fetchSubCategories(formData.category)
-    } else {
-      setSubCategories([])
-      setFormData((prev) => ({ ...prev, subcategory: '' }))
     }
   }, [formData.category])
 
-  const fetchInitialData = async () => {
+  const fetchProduct = async () => {
     try {
-      setFetchingProduct(true)
+      setFetchLoading(true)
+      const response = await adminProductsAPI.getById(params.id)
+      const product = response.data || response
 
-      const [productRes, categoriesRes, brandsRes] = await Promise.all([
-        adminProductsAPI.getById(params.id),
-        adminCategoriesAPI.getAll(),
-        adminBrandsAPI.getAll(),
-      ])
-
-      const product = productRes.data
-
+      // ✅ الربط المطلوب: title (DB) -> titleAr (UI) | titleEn (DB) -> titleEn (UI)
       setFormData({
-        title: product.title || '',
-        description: product.description || '',
+        titleAr: product.title || '',
+        titleEn: product.titleEn || '',
+        descriptionAr: product.description || '',
+        descriptionEn: product.descriptionEn || '',
         price: product.price?.toString() || '',
-        discount: product.priceAfterDiscount
-          ? (
-              ((product.price - product.priceAfterDiscount) / product.price) *
-              100
-            ).toFixed(0)
+        discount: product.priceAfterDiscount 
+          ? Math.round(((product.price - product.priceAfterDiscount) / product.price * 100)).toString()
           : '',
         quantity: product.quantity?.toString() || '',
         category: product.category?._id || '',
@@ -104,56 +101,67 @@ export default function EditProductPage({
         brand: product.brand?._id || '',
       })
 
-      setCoverImagePreview(getImageUrl(product.imageCover))
-      setAdditionalImagePreviews((product.images || []).map(getImageUrl))
-
+      setExistingCoverImage(product.imageCover || '')
+      setExistingImages(product.images || [])
       setSelectedColors(product.colors || [])
       setSelectedSizes(product.sizes || [])
-
-      setCategories(categoriesRes.data || [])
-      setBrands(brandsRes.data || [])
-
-      if (product.category?._id) {
-        const subCatsRes = await adminSubCategoriesAPI.getByCategoryId(
-          product.category._id
-        )
-        setSubCategories(subCatsRes.data || [])
-      }
     } catch (error: any) {
-      console.error('Failed to fetch product:', error)
-      toast({
-        title: 'خطأ',
-        description: 'فشل تحميل بيانات المنتج',
-        variant: 'destructive',
-      })
+      toast({ title: 'خطأ', description: 'فشل تحميل بيانات المنتج', variant: 'destructive' })
     } finally {
-      setFetchingProduct(false)
+      setFetchLoading(false)
     }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const response = await adminCategoriesAPI.getAll()
+      setCategories(response.data || response)
+    } catch (error) { console.error(error) }
   }
 
   const fetchSubCategories = async (categoryId: string) => {
     try {
       const response = await adminSubCategoriesAPI.getByCategoryId(categoryId)
-      setSubCategories(response.data || [])
-    } catch (error) {
-      setSubCategories([])
-    }
+      setSubCategories(response.data || response)
+    } catch (error) { setSubCategories([]) }
+  }
+
+  const fetchBrands = async () => {
+    try {
+      const response = await adminBrandsAPI.getAll()
+      setBrands(response.data || response)
+    } catch (error) { console.error(error) }
   }
 
   const calculateFinalPrice = () => {
     const priceNum = parseFloat(formData.price) || 0
     const discountNum = parseFloat(formData.discount) || 0
-    if (discountNum > 0) {
-      return (priceNum - (priceNum * discountNum) / 100).toFixed(2)
-    }
-    return priceNum.toFixed(2)
+    return discountNum > 0 ? (priceNum - (priceNum * discountNum) / 100).toFixed(2) : priceNum.toFixed(2)
   }
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  // ✅ تعريف الدالة الناقصة handleToggle
+  const handleToggle = (type: 'colors' | 'sizes', value: string) => {
+    if (type === 'colors') {
+      setSelectedColors((prev) =>
+        prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value]
+      )
+    } else {
+      setSelectedSizes((prev) =>
+        prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]
+      )
+    }
+  }
+
+  // ✅ تعريف الدالة الناقصة handleAddCustomColor
+  const handleAddCustomColor = () => {
+    if (customColorHex && !selectedColors.includes(customColorHex)) {
+      setSelectedColors([...selectedColors, customColorHex])
+    }
   }
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,397 +172,226 @@ export default function EditProductPage({
     }
   }
 
-  const handleAdditionalImagesChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     setAdditionalImages([...additionalImages, ...files])
     const previews = files.map((file) => URL.createObjectURL(file))
     setAdditionalImagePreviews([...additionalImagePreviews, ...previews])
   }
 
+  const removeExistingImage = (index: number) => {
+    setExistingImages(existingImages.filter((_, i) => i !== index))
+  }
+
   const removeAdditionalImage = (index: number) => {
     setAdditionalImages(additionalImages.filter((_, i) => i !== index))
-    setAdditionalImagePreviews(
-      additionalImagePreviews.filter((_, i) => i !== index)
-    )
-  }
-
-  const handleToggle = (type: 'colors' | 'sizes', value: string) => {
-    if (type === 'colors') {
-      setSelectedColors((prev) =>
-        prev.includes(value)
-          ? prev.filter((c) => c !== value)
-          : [...prev, value]
-      )
-    } else {
-      setSelectedSizes((prev) =>
-        prev.includes(value)
-          ? prev.filter((s) => s !== value)
-          : [...prev, value]
-      )
-    }
-  }
-
-  const handleAddCustomColor = () => {
-    if (customColorHex && !selectedColors.includes(customColorHex)) {
-      setSelectedColors([...selectedColors, customColorHex])
-    }
+    setAdditionalImagePreviews(additionalImagePreviews.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (
-      !formData.title ||
-      !formData.description ||
-      !formData.price ||
-      !formData.quantity ||
-      !formData.category
-    ) {
-      toast({
-        title: 'خطأ',
-        description: 'يرجى ملء جميع الحقول المطلوبة',
-        variant: 'destructive',
-      })
-      return
-    }
-
     setLoading(true)
 
     try {
       const formDataToSend = new FormData()
-
-      formDataToSend.append('title', formData.title)
-      formDataToSend.append('description', formData.description)
+      formDataToSend.append('title', formData.titleAr)
+      formDataToSend.append('description', formData.descriptionAr)
+      formDataToSend.append('titleEn', formData.titleEn)
+      formDataToSend.append('descriptionEn', formData.descriptionEn)
       formDataToSend.append('price', formData.price)
-
+      
       const discountNum = parseFloat(formData.discount) || 0
       if (discountNum > 0) {
-        const priceNum = parseFloat(formData.price)
-        const finalPrice = priceNum - (priceNum * discountNum) / 100
+        const finalPrice = parseFloat(formData.price) - (parseFloat(formData.price) * discountNum) / 100
         formDataToSend.append('priceAfterDiscount', finalPrice.toString())
       }
 
       formDataToSend.append('quantity', formData.quantity)
       formDataToSend.append('category', formData.category)
-
-      if (formData.subcategory) {
-        formDataToSend.append('subcategories', formData.subcategory)
-      }
-
-      if (formData.brand) {
-        formDataToSend.append('brand', formData.brand)
-      }
-
-      if (coverImage) {
-        formDataToSend.append('imageCover', coverImage)
-      }
-
-      additionalImages.forEach((image) => {
-        formDataToSend.append('images', image)
-      })
-
-      if (selectedColors.length > 0) {
-        selectedColors.forEach((color) => {
-          formDataToSend.append('colors[]', color)
-        })
-      }
-
-      if (selectedSizes.length > 0) {
-        selectedSizes.forEach((size) => {
-          formDataToSend.append('sizes[]', size)
-        })
-      }
+      if (formData.subcategory) formDataToSend.append('subcategories', formData.subcategory)
+      if (formData.brand) formDataToSend.append('brand', formData.brand)
+      if (coverImage) formDataToSend.append('imageCover', coverImage)
+      
+      additionalImages.forEach((image) => formDataToSend.append('images', image))
+      selectedColors.forEach((color) => formDataToSend.append('colors[]', color))
+      selectedSizes.forEach((size) => formDataToSend.append('sizes[]', size))
 
       await adminProductsAPI.update(params.id, formDataToSend)
-
-      toast({
-        title: 'تم التحديث',
-        description: 'تم تحديث المنتج بنجاح',
-      })
-
+      toast({ title: '✅ تم التحديث', description: 'تم حفظ التعديلات بنجاح' })
       router.push('/admin/products')
     } catch (error: any) {
-      console.error('Error:', error)
-      toast({
-        title: 'خطأ',
-        description: error.response?.data?.message || 'فشل تحديث المنتج',
-        variant: 'destructive',
-      })
+      toast({ title: 'خطأ', description: 'فشل تحديث المنتج', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
   }
 
-  if (fetchingProduct) {
-    return (
-      <div className='flex items-center justify-center min-h-[60vh]'>
-        <Loader2 className='h-12 w-12 animate-spin text-primary' />
-      </div>
-    )
-  }
+  if (fetchLoading) return <div className='flex h-[60vh] items-center justify-center'><Loader2 className='animate-spin text-primary w-12 h-12' /></div>
 
   return (
-    <div className='space-y-6 max-w-6xl'>
-      <div className='flex items-center gap-4'>
-        <Link href='/admin/products'>
-          <Button variant='ghost' size='icon'>
-            <ArrowRight className='h-5 w-5' />
-          </Button>
-        </Link>
-        <div>
-          <h1 className='text-3xl font-bold'>تعديل المنتج</h1>
-          <p className='text-muted-foreground'>تحديث بيانات المنتج</p>
+    <div className='space-y-8 max-w-[1400px] mx-auto pb-20 px-4' dir="rtl">
+      
+      {/* Header Section */}
+      <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-[2rem] border border-border/50 shadow-sm'>
+        <div className='flex items-center gap-4'>
+          <Link href='/admin/products'>
+            <Button variant='secondary' size='icon' className='rounded-full h-12 w-12 hover:bg-primary transition-all'>
+              <ArrowRight className='h-6 w-6' />
+            </Button>
+          </Link>
+          <div>
+            <h1 className='text-3xl font-black tracking-tight text-foreground'>تعديل المنتج</h1>
+            <p className='text-muted-foreground text-sm font-medium'>تعديل خصائص وتفاصيل المنتج</p>
+          </div>
         </div>
+        <Button onClick={handleSubmit} className="gold-gradient h-14 px-10 rounded-2xl font-black text-lg shadow-xl" disabled={loading}>
+          {loading ? <Loader2 className="animate-spin ml-2" /> : <Save className="ml-2 h-5 w-5" />} حفظ التغييرات
+        </Button>
       </div>
 
-      <form onSubmit={handleSubmit} className='space-y-6'>
-        <div className='grid lg:grid-cols-3 gap-6'>
-          <div className='lg:col-span-2 space-y-6'>
-            <Card>
-              <CardHeader>
-                <CardTitle>المعلومات الأساسية</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='title'>
-                    اسم المنتج <span className='text-red-500'>*</span>
-                  </Label>
-                  <Input
-                    id='title'
-                    name='title'
-                    required
-                    value={formData.title}
-                    onChange={handleInputChange}
-                  />
-                </div>
+      <div className='grid grid-cols-1 lg:grid-cols-12 gap-8'>
+        
+        {/* Main Content */}
+        <div className='lg:col-span-8 space-y-8'>
+          <Card className="border-none shadow-xl rounded-[2rem] overflow-hidden bg-card">
+            <CardHeader className="bg-muted/20 border-b">
+               <CardTitle className="text-lg flex items-center gap-2 text-foreground"><Info className="text-primary" /> تفاصيل المحتوى</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Tabs defaultValue='ar' className='w-full'>
+                <TabsList className='grid w-full grid-cols-2 h-14 bg-muted/30 rounded-none border-b p-0'>
+                  <TabsTrigger value='ar' className="h-full font-bold">🇸🇦 العربية (title)</TabsTrigger>
+                  <TabsTrigger value='en' className="h-full font-bold">🇬🇧 English (titleEn)</TabsTrigger>
+                </TabsList>
 
-                <div className='space-y-2'>
-                  <Label htmlFor='description'>
-                    الوصف <span className='text-red-500'>*</span>
-                  </Label>
-                  <Textarea
-                    id='description'
-                    name='description'
-                    required
-                    rows={5}
-                    value={formData.description}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                <TabsContent value='ar' className='p-6 space-y-4 animate-in fade-in duration-300'>
+                  <div className='space-y-2'>
+                    <Label className="font-bold text-foreground">اسم المنتج (بالعربية)</Label>
+                    <Input name='titleAr' value={formData.titleAr} onChange={handleInputChange} className='h-12 rounded-xl border-border bg-background text-foreground' />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className="font-bold text-foreground">الوصف (بالعربية)</Label>
+                    <Textarea name='descriptionAr' value={formData.descriptionAr} onChange={handleInputChange} rows={5} className='rounded-xl border-border bg-background text-foreground' />
+                  </div>
+                </TabsContent>
 
-            <VariantsCard
-              colors={selectedColors}
-              sizes={selectedSizes}
-              onToggle={handleToggle}
-              customColorHex={customColorHex}
-              setCustomColorHex={setCustomColorHex}
-              onAddCustomColor={handleAddCustomColor}
-            />
+                <TabsContent value='en' className='p-6 space-y-4 animate-in fade-in duration-300' dir="ltr">
+                  <div className='space-y-2'>
+                    <Label className="font-bold font-sans text-foreground">Product Name (English)</Label>
+                    <Input name='titleEn' value={formData.titleEn} onChange={handleInputChange} className='h-12 rounded-xl border-border font-sans bg-background text-foreground' />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className="font-bold font-sans text-foreground">English Description</Label>
+                    <Textarea name='descriptionEn' value={formData.descriptionEn} onChange={handleInputChange} rows={5} className='rounded-xl border-border font-sans bg-background text-foreground' />
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>صور المنتج</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='space-y-2'>
-                  <Label>الصورة الرئيسية</Label>
-                  {coverImagePreview ? (
-                    <div className='relative w-full h-64 rounded-lg overflow-hidden bg-secondary'>
-                      <Image
-                        src={coverImagePreview}
-                        alt='Cover'
-                        fill
-                        className='object-cover'
-                      />
-                      <Button
-                        type='button'
-                        variant='destructive'
-                        size='icon'
-                        className='absolute top-2 left-2'
-                        onClick={() => {
-                          setCoverImage(null)
-                          setCoverImagePreview('')
-                        }}
-                      >
-                        <X className='h-4 w-4' />
-                      </Button>
-                    </div>
+          {/* استدعاء المكونات الفرعية مع الدوال المعرفة ✅ */}
+          <VariantsCard 
+            colors={selectedColors} 
+            sizes={selectedSizes} 
+            onToggle={handleToggle} 
+            customColorHex={customColorHex} 
+            setCustomColorHex={setCustomColorHex} 
+            onAddCustomColor={handleAddCustomColor} 
+          />
+
+          {/* Media Section */}
+          <Card className="border-none shadow-xl rounded-[2rem] overflow-hidden bg-card">
+            <CardHeader className="bg-muted/20 border-b border-border/50">
+               <CardTitle className="text-foreground">الصور والوسائط</CardTitle>
+            </CardHeader>
+            <CardContent className='p-6 space-y-6'>
+              <div className='space-y-3'>
+                <Label className="font-bold text-foreground">صورة الغلاف (الرئيسية)</Label>
+                <div className='relative h-64 rounded-2xl overflow-hidden border-2 border-dashed border-border bg-muted/10 group'>
+                  {coverImagePreview || existingCoverImage ? (
+                    <>
+                      <Image src={coverImagePreview || getImageUrl(existingCoverImage)} alt='Cover' fill className='object-contain' />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <label className="cursor-pointer bg-white text-black px-6 py-2 rounded-full font-bold shadow-lg">
+                            تغيير الصورة
+                            <input type='file' className='hidden' accept='image/*' onChange={handleCoverImageChange} />
+                         </label>
+                      </div>
+                    </>
                   ) : (
-                    <label className='flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-secondary transition-colors'>
-                      <Upload className='h-12 w-12 text-muted-foreground mb-2' />
-                      <p className='text-sm text-muted-foreground'>
-                        اضغط لرفع الصورة
-                      </p>
-                      <input
-                        type='file'
-                        className='hidden'
-                        accept='image/*'
-                        onChange={handleCoverImageChange}
-                      />
+                    <label className="h-full w-full flex flex-col items-center justify-center cursor-pointer">
+                        <Upload size={40} className="text-muted-foreground mb-2" />
+                        <span className="text-muted-foreground font-medium">ارفع الصورة الرئيسية</span>
+                        <input type='file' className='hidden' accept='image/*' onChange={handleCoverImageChange} />
                     </label>
                   )}
                 </div>
+              </div>
 
-                <div className='space-y-2'>
-                  <Label>صور إضافية</Label>
-                  <div className='grid grid-cols-3 gap-4'>
-                    {additionalImagePreviews.map((preview, index) => (
-                      <div
-                        key={index}
-                        className='relative aspect-square rounded-lg overflow-hidden bg-secondary'
-                      >
-                        <Image
-                          src={preview}
-                          alt={`Additional ${index + 1}`}
-                          fill
-                          className='object-cover'
-                        />
-                        <Button
-                          type='button'
-                          variant='destructive'
-                          size='icon'
-                          className='absolute top-1 left-1 h-6 w-6'
-                          onClick={() => removeAdditionalImage(index)}
-                        >
-                          <X className='h-3 w-3' />
-                        </Button>
-                      </div>
-                    ))}
-                    <label className='flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-lg cursor-pointer hover:bg-secondary transition-colors'>
-                      <Upload className='h-8 w-8 text-muted-foreground mb-1' />
-                      <p className='text-xs text-muted-foreground'>
-                        إضافة صورة
-                      </p>
-                      <input
-                        type='file'
-                        className='hidden'
-                        accept='image/*'
-                        multiple
-                        onChange={handleAdditionalImagesChange}
-                      />
+              <div className='space-y-3'>
+                <Label className="font-bold text-foreground">معرض الصور الإضافي</Label>
+                <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
+                  {existingImages.map((img, i) => (
+                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-border group">
+                      <Image src={getImageUrl(img)} alt="Gallery" fill className="object-cover" />
+                      <Button variant="destructive" size="icon" className="absolute top-1 left-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-all" onClick={() => removeExistingImage(i)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {additionalImagePreviews.map((img, i) => (
+                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-primary/30">
+                      <Image src={img} alt="New" fill className="object-cover" />
+                      <Button variant="destructive" size="icon" className="absolute top-1 left-1 h-7 w-7" onClick={() => removeAdditionalImage(i)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {existingImages.length + additionalImages.length < 5 && (
+                    <label className="aspect-square rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center bg-muted/5 cursor-pointer hover:bg-muted/10 transition-all">
+                      <Plus className="w-8 h-8 text-muted-foreground" />
+                      <input type='file' className='hidden' accept='image/*' multiple onChange={handleAdditionalImagesChange} />
                     </label>
-                  </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className='lg:col-span-1 space-y-6'>
-            <PricingCard
-              price={formData.price}
-              discount={formData.discount}
-              quantity={formData.quantity}
-              finalPrice={calculateFinalPrice()}
-              onChange={handleInputChange}
-            />
-
-            <Card>
-              <CardHeader>
-                <CardTitle>التصنيف والعلامة التجارية</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='category'>
-                    الفئة <span className='text-red-500'>*</span>
-                  </Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, category: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='اختر الفئة' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat._id} value={cat._id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {subCategories.length > 0 && (
-                  <div className='space-y-2'>
-                    <Label htmlFor='subcategory'>الفئة الفرعية</Label>
-                    <Select
-                      value={formData.subcategory}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, subcategory: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='اختر الفئة الفرعية' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {subCategories.map((sub) => (
-                          <SelectItem key={sub._id} value={sub._id}>
-                            {sub.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className='space-y-2'>
-                  <Label htmlFor='brand'>الماركة</Label>
-                  <Select
-                    value={formData.brand}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, brand: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='اختر الماركة' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {brands.map((brand) => (
-                        <SelectItem key={brand._id} value={brand._id}>
-                          {brand.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Button
-              type='submit'
-              className='w-full gold-gradient'
-              size='lg'
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className='ml-2 h-4 w-4 animate-spin' />
-                  جاري التحديث...
-                </>
-              ) : (
-                'تحديث المنتج'
-              )}
-            </Button>
-
-            <Link href='/admin/products'>
-              <Button
-                type='button'
-                variant='outline'
-                size='lg'
-                className='w-full'
-              >
-                إلغاء
-              </Button>
-            </Link>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </form>
+
+        {/* Sidebar */}
+        <div className='lg:col-span-4 space-y-8'>
+          <PricingCard 
+            price={formData.price} 
+            discount={formData.discount} 
+            quantity={formData.quantity} 
+            finalPrice={calculateFinalPrice()} 
+            onChange={handleInputChange} 
+          />
+
+          <Card className="border-none shadow-xl rounded-[2rem] bg-card">
+            <CardHeader className="border-b border-border/50">
+               <CardTitle className="flex items-center gap-2 text-foreground"><LayoutGrid className="text-primary w-5 h-5" /> التصنيف</CardTitle>
+            </CardHeader>
+            <CardContent className='p-6 space-y-6'>
+              <div className='space-y-2'>
+                <Label className="font-bold text-foreground">القسم</Label>
+                <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
+                  <SelectTrigger className="h-11 rounded-xl bg-background border-border text-foreground"><SelectValue placeholder='اختر الفئة' /></SelectTrigger>
+                  <SelectContent>{categories.map((c) => <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-2'>
+                <Label className="font-bold text-foreground">الماركة</Label>
+                <Select value={formData.brand} onValueChange={(val) => setFormData({ ...formData, brand: val })}>
+                  <SelectTrigger className="h-11 rounded-xl bg-background border-border text-foreground"><SelectValue placeholder='اختر الماركة' /></SelectTrigger>
+                  <SelectContent>{brands.map((b) => <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,7 +1,6 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
 
-// جلب الرابط الأساسي من متغيرات البيئة
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
@@ -13,15 +12,12 @@ const adminAPI = axios.create({
   withCredentials: true,
 })
 
-// ==================== INTERCEPTORS (الاعتراض) ====================
+// ==================== INTERCEPTORS ====================
 
-// 1. اعتراض الطلبات (قبل إرسال الطلب للباك إند)
 adminAPI.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      // نبحث عن التوكن في الكوكيز (للميدل وير) أو لوكال ستورج
       const token = Cookies.get('token') || localStorage.getItem('token')
-
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -31,23 +27,16 @@ adminAPI.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// 2. اعتراض الاستجابة (عند استقبال رد من الباك إند)
 adminAPI.interceptors.response.use(
-  (response) => {
-    return response
-  },
+  (response) => response,
   (error) => {
-    // إذا كان الخطأ "غير مصرح" أو "انتهت الجلسة"
     if (error.response?.status === 401 || error.response?.status === 403) {
       if (typeof window !== 'undefined') {
-        // تنظيف البيانات
         Cookies.remove('token')
         localStorage.removeItem('token')
         localStorage.removeItem('user')
-        
-        // التوجيه لصفحة دخول الأدمن (وليس صفحة دخول المستخدمين)
         if (!window.location.pathname.includes('/admin/login')) {
-            window.location.href = '/admin/login'
+          window.location.href = '/admin/login'
         }
       }
     }
@@ -55,16 +44,14 @@ adminAPI.interceptors.response.use(
   }
 )
 
-// ==================== HELPERS (مساعدات) ====================
+// ==================== HELPERS ====================
 
-// توحيد شكل الاستجابة (Normalize)
 function normalizeResponse(response: any) {
   if (response.data?.data) return response.data
   if (response.data) return { data: response.data }
   return { data: response }
 }
 
-// تسوية FormData (للملفات والصور)
 function logFormData(formData: FormData) {
   console.log('📤 FormData Content:')
   Array.from(formData.entries()).forEach(([key, value]) => {
@@ -72,9 +59,9 @@ function logFormData(formData: FormData) {
   })
 }
 
-// ==================== الأقسام البرمجية (API Sections) ====================
+// ==================== API SECTIONS ====================
 
-// 1. Dashboard (الإحصائيات)
+// 1. Dashboard
 export const adminDashboardAPI = {
   getStats: async () => {
     const response = await adminAPI.get('/admin/dashboard/stats')
@@ -84,9 +71,13 @@ export const adminDashboardAPI = {
     const response = await adminAPI.get('/orders', { params: { limit, sort: '-createdAt' } })
     return normalizeResponse(response)
   },
+  getTopProducts: async (limit = 5) => {
+    const response = await adminAPI.get('/products', { params: { limit, sort: '-sold' } })
+    return normalizeResponse(response)
+  },
 }
 
-// 2. Products (المنتجات)
+// 2. Products
 export const adminProductsAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/products', { params })
@@ -114,7 +105,7 @@ export const adminProductsAPI = {
   },
 }
 
-// 3. Categories (الأقسام)
+// 3. Categories
 export const adminCategoriesAPI = {
   getAll: async () => {
     const response = await adminAPI.get('/categories')
@@ -126,13 +117,67 @@ export const adminCategoriesAPI = {
     })
     return normalizeResponse(response)
   },
+  update: async (id: string, data: FormData) => {
+    const response = await adminAPI.put(`/categories/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return normalizeResponse(response)
+  },
   delete: async (id: string) => {
     const response = await adminAPI.delete(`/categories/${id}`)
     return response.data
   },
 }
 
-// 4. Orders (الطلبات)
+// 4. SubCategories
+export const adminSubCategoriesAPI = {
+  getAll: async () => {
+    const response = await adminAPI.get('/subcategories')
+    return normalizeResponse(response)
+  },
+  getByCategoryId: async (categoryId: string) => {
+    const response = await adminAPI.get(`/categories/${categoryId}/subcategories`)
+    return normalizeResponse(response)
+  },
+  create: async (data: any) => {
+    const response = await adminAPI.post('/subcategories', data)
+    return normalizeResponse(response)
+  },
+  update: async (id: string, data: any) => {
+    const response = await adminAPI.put(`/subcategories/${id}`, data)
+    return normalizeResponse(response)
+  },
+  delete: async (id: string) => {
+    const response = await adminAPI.delete(`/subcategories/${id}`)
+    return response.data
+  },
+}
+
+// 5. Brands
+export const adminBrandsAPI = {
+  getAll: async () => {
+    const response = await adminAPI.get('/brands')
+    return normalizeResponse(response)
+  },
+  create: async (data: FormData) => {
+    const response = await adminAPI.post('/brands', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return normalizeResponse(response)
+  },
+  update: async (id: string, data: FormData) => {
+    const response = await adminAPI.put(`/brands/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return normalizeResponse(response)
+  },
+  delete: async (id: string) => {
+    const response = await adminAPI.delete(`/brands/${id}`)
+    return response.data
+  },
+}
+
+// 6. Orders
 export const adminOrdersAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/orders', { params })
@@ -152,11 +197,15 @@ export const adminOrdersAPI = {
   }
 }
 
-// 5. Users (المستخدمين)
+// 7. Users
 export const adminUsersAPI = {
   getAll: async (params?: any) => {
     const response = await adminAPI.get('/users', { params })
     return normalizeResponse(response)
+  },
+  getById: async (id: string) => {
+    const response = await adminAPI.get(`/users/${id}`)
+    return normalizeResponse(response).data
   },
   changeRole: async (id: string, role: string) => {
     const response = await adminAPI.put(`/users/changeUserRole/${id}`, { role })
@@ -165,6 +214,22 @@ export const adminUsersAPI = {
   delete: async (id: string) => {
     const response = await adminAPI.delete(`/users/${id}`)
     return response.data
+  },
+}
+
+// 8. Reviews
+export const adminReviewsAPI = {
+  getAll: async (params?: any) => {
+    const response = await adminAPI.get('/reviews', { params })
+    return normalizeResponse(response)
+  },
+  delete: async (id: string) => {
+    const response = await adminAPI.delete(`/reviews/${id}`)
+    return response.data
+  },
+  approve: async (id: string) => {
+    const response = await adminAPI.put(`/reviews/${id}/approve`)
+    return normalizeResponse(response)
   },
 }
 

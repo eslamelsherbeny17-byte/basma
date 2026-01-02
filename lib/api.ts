@@ -68,24 +68,23 @@ api.interceptors.response.use(
 
 // ==================== PRODUCTS API ====================
 export const productsAPI = {
-  getAll: async (params?: ProductQueryParams) => {
-    const cleanParams: any = { ...params }
+getAll: async (params?: ProductQueryParams) => {
+    const cleanParams: any = { ...params };
 
-    // ✅ التعديل المطلوب ليعمل الفلتر مع السعر الجديد (finalPrice) في الباك إند
     if (cleanParams.priceMin !== undefined) {
-      cleanParams['price[gte]'] = cleanParams.priceMin
-      delete cleanParams.priceMin
+      cleanParams['price[gte]'] = cleanParams.priceMin;
+      delete cleanParams.priceMin;
     }
     if (cleanParams.priceMax !== undefined) {
-      cleanParams['price[lte]'] = cleanParams.priceMax
-      delete cleanParams.priceMax
+      cleanParams['price[lte]'] = cleanParams.priceMax;
+      delete cleanParams.priceMax;
     }
 
     const response = await api.get<PaginatedResponse<Product>>('/products', {
       params: cleanParams,
-      paramsSerializer: { indexes: null } // لضمان إرسال المصفوفات بشكل صحيح
-    })
-    return response.data
+      paramsSerializer: { indexes: null }
+    });
+    return response.data;
   },
 
   getById: async (id: string) => {

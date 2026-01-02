@@ -19,14 +19,16 @@ export default function HomePage() {
       <CategoryCircles />
 
       <Separator className='my-0 opacity-50' />
+       <FlashSale /> 
 
       {/* 3. وصل حديثاً (لإظهار نشاط المحل الدائم) */}
       <NewArrivals />
+       <BestSellers />
 
 {/* هذا المكون سيعرض العبايات، النقاب، الخمار.. إلخ تلقائياً */}
      <FeaturedCategoriesManager />
       {/* 7. الأكثر مبيعاً (القطع التي يفضلها الزبائن) */}
-      <BestSellers />
+     
 
       <Separator className='my-10 opacity-30' />
 

@@ -62,44 +62,50 @@ function ShopContent() {
     }
   }
 
- const fetchProducts = async () => {
+// داخل دالة fetchProducts في صفحة ShopContent
+const fetchProducts = async () => {
   try {
-    setLoading(true)
+    setLoading(true);
     const params: any = {
       page: currentPage,
       limit: 12,
+    };
+
+    // 1. الترتيب
+    if (sortBy === 'price-low') params.sort = 'price';
+    else if (sortBy === 'price-high') params.sort = '-price';
+    else if (sortBy === 'newest') params.sort = '-createdAt';
+    else if (sortBy === 'rating') params.sort = '-ratingsAverage';
+    else if (sortBy === 'bestsellers') params.sort = '-sold';
+
+    // 2. الفلاتر الجانبية (الأولوية لها)
+    if (activeFilters.category && activeFilters.category.length > 0) {
+      params.category = activeFilters.category;
+    } else if (categoryParam) {
+      params.category = categoryParam;
     }
 
-    // 1. الترتيب (يستخدم finalPrice بفضل تعديل الباك إند في الـ sort)
-    if (sortBy === 'price-low') params.sort = 'price'
-    else if (sortBy === 'price-high') params.sort = '-price'
-    else if (sortBy === 'newest') params.sort = '-createdAt'
-    else if (sortBy === 'rating') params.sort = '-ratingsAverage'
-    else if (sortBy === 'bestsellers') params.sort = '-sold'
+    if (activeFilters.brand) params.brand = activeFilters.brand;
+    if (activeFilters.priceMin) params.priceMin = activeFilters.priceMin;
+    if (activeFilters.priceMax) params.priceMax = activeFilters.priceMax;
 
-    // 2. الفلاتر القادمة من الـ Sidebar (أهم جزء)
-    if (activeFilters.category) params.category = activeFilters.category
-    if (activeFilters.brand) params.brand = activeFilters.brand
-    
-    // إرسال القيم كـ priceMin و priceMax ليقوم api.ts بتحويلها
-    if (activeFilters.priceMin) params.priceMin = activeFilters.priceMin
-    if (activeFilters.priceMax) params.priceMax = activeFilters.priceMax
+    // 3. حالة التخفيضات (Flash Sale) ✅
+    // إذا كان الرابط فيه sale=true (من زر عرض المزيد)
+    if (saleParam === 'true' || activeFilters.sale) {
+      params.isDiscounted = 'true'; 
+    }
 
-    // 3. فلاتر الـ URL (Search / Category) - نستخدمها فقط إذا لم يكن هناك فلتر نشط
-    if (!activeFilters.category && categoryParam) params.category = categoryParam
-    if (searchParam) params.keyword = searchParam
-    if (saleParam) params.priceAfterDiscount = true
+    if (searchParam) params.keyword = searchParam;
 
-    const response = await productsAPI.getAll(params)
-    setProducts(response.data || [])
-    setTotalPages(response.paginationResult?.numberOfPages || 1)
+    const response = await productsAPI.getAll(params);
+    setProducts(response.data || []);
+    setTotalPages(response.paginationResult?.numberOfPages || 1);
   } catch (error) {
-    console.error('Failed to fetch products:', error)
+    console.error('Failed to fetch products:', error);
   } finally {
-    setLoading(false)
+    setLoading(false);
   }
-  }
-
+};
   // ✅ Handle Filter Change
   const handleFilterChange = useCallback((filters: any) => {
     console.log('🔄 Filter Changed:', filters)

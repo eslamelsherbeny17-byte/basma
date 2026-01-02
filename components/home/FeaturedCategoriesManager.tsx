@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Sparkles, Loader2 } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { productsAPI, categoriesAPI } from '@/lib/api'
+import { ChevronLeft, Sparkles, Loader2, TrendingUp } from 'lucide-react'
+import { productsAPI } from '@/lib/api'
 import { ProductCard } from '@/components/products/ProductCard'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
 import type { Product, Category } from '@/lib/types'
 
-// مكون داخلي صغير لعرض كل قسم على حدة (لتقليل تكرار الكود)
+// مكون داخلي لعرض كل قسم
 function SingleCategorySection({ category, index }: { category: Category; index: number }) {
   const { language, isRTL } = useLanguage()
   const [products, setProducts] = useState<Product[]>([])
@@ -35,49 +34,74 @@ function SingleCategorySection({ category, index }: { category: Category; index:
     fetchProducts()
   }, [category._id])
 
-  if (loading || products.length === 0) return null
+  if (loading) {
+    return (
+      <section className='py-10 bg-background'>
+        <div className='flex justify-center items-center min-h-[300px]'>
+          <Loader2 className='h-10 w-10 animate-spin text-primary' />
+        </div>
+      </section>
+    )
+  }
+
+  if (products.length === 0) return null
 
   return (
-    <section className="py-12 sm:py-20 border-b border-border/40 last:border-0 bg-background">
-      <div className="container mx-auto px-4">
+    <section className='pt-10 pb-16 bg-background'>
+      <div className='container mx-auto px-4'>
         {/* الرأس (Header) */}
-        <div className="flex flex-col items-center text-center mb-10 sm:mb-16">
-          <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full mb-4 shadow-sm">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">
-              {index === 0 ? (language === 'ar' ? 'الأكثر طلباً' : 'Bestsellers') : (language === 'ar' ? 'تشكيلة مختارة' : 'Curated Selection')}
-            </span>
+        <div className='text-center mb-12'>
+          <div className='inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4'>
+            {index === 0 ? (
+              <>
+                <TrendingUp className='h-5 w-5 text-primary' />
+                <span className='text-primary font-semibold'>
+                  {language === 'ar' ? 'الأكثر طلباً' : 'Bestsellers'}
+                </span>
+              </>
+            ) : (
+              <>
+                <Sparkles className='h-5 w-5 text-primary fill-current' />
+                <span className='text-primary font-semibold'>
+                  {language === 'ar' ? 'تشكيلة مختارة' : 'Curated Selection'}
+                </span>
+              </>
+            )}
           </div>
-          <h2 className="text-2xl sm:text-4xl font-black text-foreground mb-3 tracking-tight">
+          <h2 className='text-3xl md:text-4xl font-bold mb-4'>
             {category.name}
           </h2>
-          <div className="h-1 w-16 bg-primary rounded-full" />
+          <p className='text-muted-foreground max-w-2xl mx-auto'>
+            {language === 'ar' 
+              ? `اكتشفي أفضل منتجات ${category.name}` 
+              : `Discover the best ${category.name} products`
+            }
+          </p>
         </div>
 
-        {/* شبكة المنتجات (تستخدم ProductCard الخاص بك) */}
-        <div className="flex overflow-x-auto lg:grid lg:grid-cols-4 gap-4 sm:gap-6 pb-8 sm:pb-0 scrollbar-hide snap-x">
+        {/* شبكة المنتجات */}
+        <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8'>
           {products.map((product) => (
-            <motion.div
-              key={product._id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="min-w-[260px] sm:min-w-0 snap-center"
-            >
-              <ProductCard product={product} />
-            </motion.div>
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
 
-        {/* زر عرض الكل */}
-        <div className="mt-10 sm:mt-16 flex justify-center">
+        {/* زر عرض الكل - بنفس تأثير الـ Hover البرتقالي */}
+        <div className='text-center'>
           <Link href={`/shop?category=${category._id}`}>
-            <Button
-              variant="outline"
-              className="rounded-full border-2 font-black px-10 h-12 hover:bg-primary hover:text-white transition-all gap-3 group shadow-sm"
+            <Button 
+              variant='outline' 
+              size='lg'
+              className='hover:bg-primary hover:text-white transition-all'
             >
-              {language === 'ar' ? `استكشفي المزيد من ${category.name}` : `View More ${category.name}`}
-              <ArrowRight className={cn("w-5 h-5 transition-transform group-hover:translate-x-2", isRTL && "rotate-180 group-hover:-translate-x-2")} />
+              {language === 'ar' 
+                ? `عرض جميع منتجات ${category.name}` 
+                : `View All ${category.name}`
+              }
+              <ChevronLeft className={cn(
+                'h-4 w-4',
+                isRTL ? 'mr-2 rotate-180' : 'ml-2'
+              )} />
             </Button>
           </Link>
         </div>
@@ -93,7 +117,6 @@ export function FeaturedCategoriesManager() {
   useEffect(() => {
     const loadFeatured = async () => {
       try {
-        // جلب الفئات التي علم عليها الأدمن فقط
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories?showOnHomePage=true`)
         const json = await response.json()
         setFeaturedCategories(json.data || [])
@@ -106,15 +129,25 @@ export function FeaturedCategoriesManager() {
     loadFeatured()
   }, [])
 
-  if (isInitialLoading || featuredCategories.length === 0) return null
+  if (isInitialLoading) {
+    return (
+      <section className='py-10 bg-background'>
+        <div className='flex justify-center items-center min-h-[300px]'>
+          <Loader2 className='h-10 w-10 animate-spin text-primary' />
+        </div>
+      </section>
+    )
+  }
+
+  if (featuredCategories.length === 0) return null
 
   return (
     <>
       {featuredCategories.map((category, index) => (
         <SingleCategorySection 
-            key={category._id} 
-            category={category} 
-            index={index} 
+          key={category._id} 
+          category={category} 
+          index={index} 
         />
       ))}
     </>

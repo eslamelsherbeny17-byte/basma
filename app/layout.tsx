@@ -10,7 +10,7 @@ import { WishlistProvider } from "@/contexts/WishlistContext"
 import { OrdersProvider } from "@/contexts/OrdersContext"
 import { ThemeProvider } from "@/contexts/ThemeContext"
 import { LanguageProvider } from "@/contexts/LanguageContext"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "sonner" // ⭐ تغيير هنا - استخدام sonner بدلاً من ui/toaster
 
 const cairo = Cairo({
   subsets: ["arabic"],
@@ -135,7 +135,21 @@ export default function RootLayout({
                   <AddressProvider>
                     <OrdersProvider>
                       {children}
-                      <Toaster />
+                      {/* ⭐ Toaster من sonner مع إعدادات للعربية */}
+                      <Toaster 
+                        position="top-center"
+                        dir="rtl"
+                        richColors
+                        closeButton
+                        expand={false}
+                        duration={5000}
+                        toastOptions={{
+                          className: 'font-cairo',
+                          style: {
+                            fontFamily: 'var(--font-cairo)',
+                          },
+                        }}
+                      />
                     </OrdersProvider>
                   </AddressProvider>
                 </WishlistProvider>

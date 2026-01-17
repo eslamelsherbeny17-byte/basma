@@ -614,7 +614,6 @@ export function Navbar() {
   </Button>
 )}
 
-
                 {/* Cart (visible for users, prompts login if not authenticated) */}
                 {!isAdmin && (
                   <Button
@@ -797,14 +796,14 @@ export function Navbar() {
                     </div>
                   </Link>
 
-                  <Link href='/orders' onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href='/profile/orders' onClick={() => setIsMobileMenuOpen(false)}>
                     <div className='flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted/80 transition-colors'>
                       <Package className='h-5 w-5 text-primary' />
                       <span className='text-sm font-semibold'>{t('orders')}</span>
                     </div>
                   </Link>
 
-                  <Link href='/addresses' onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href='/profile/addresses' onClick={() => setIsMobileMenuOpen(false)}>
                     <div className='flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted/80 transition-colors'>
                       <MapPin className='h-5 w-5 text-primary' />
                       <span className='text-sm font-semibold'>{t('addresses')}</span>

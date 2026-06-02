@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
     const brands = await Brand.find({});
 
-    return NextResponse.json({ brands }, { status: 200 });
+    return NextResponse.json({ data: brands }, { status: 200 });
   } catch (error) {
     console.error('Brands list error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -32,13 +32,21 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
-    const body = await req.json();
-    const { name, description, logo } = body;
+    const formData = await req.formData();
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const image = formData.get('image') as File;
+
+    // TODO: Upload image to Cloudinary
+    let imageUrl = '';
+    // if (image) {
+    //   imageUrl = await uploadToCloudinary(image);
+    // }
 
     const brand = new Brand({
       name,
       description,
-      logo,
+      image: imageUrl,
     });
 
     await brand.save();
@@ -46,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Brand created successfully',
-        brand,
+        data: brand,
       },
       { status: 201 }
     );

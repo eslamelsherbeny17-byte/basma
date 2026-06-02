@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
     const categories = await Category.find({});
 
-    return NextResponse.json({ categories }, { status: 200 });
+    return NextResponse.json({ data: categories }, { status: 200 });
   } catch (error) {
     console.error('Categories list error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -32,13 +32,21 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
-    const body = await req.json();
-    const { name, description, image } = body;
+    const formData = await req.formData();
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const image = formData.get('image') as File;
+
+    // TODO: Upload image to Cloudinary
+    let imageUrl = '';
+    // if (image) {
+    //   imageUrl = await uploadToCloudinary(image);
+    // }
 
     const category = new Category({
       name,
       description,
-      image,
+      image: imageUrl,
     });
 
     await category.save();
@@ -46,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Category created successfully',
-        category,
+        data: category,
       },
       { status: 201 }
     );

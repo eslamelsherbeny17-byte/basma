@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        orders,
+        data: orders,
         pagination: {
           page,
           limit,
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Order created successfully',
-        order,
+        data: order,
       },
       { status: 201 }
     );

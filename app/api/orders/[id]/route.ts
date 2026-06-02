@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    return NextResponse.json({ order }, { status: 200 });
+    return NextResponse.json({ data: order }, { status: 200 });
   } catch (error) {
     console.error('Order detail error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -69,7 +69,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json(
       {
         message: 'Order updated successfully',
-        order,
+        data: order,
       },
       { status: 200 }
     );

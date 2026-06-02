@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Product not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ product }, { status: 200 });
+    return NextResponse.json({ data: product }, { status: 200 });
   } catch (error) {
     console.error('Product detail error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -42,8 +42,36 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     await dbConnect();
 
-    const body = await req.json();
-    const product = await Product.findByIdAndUpdate(params.id, body, {
+    const formData = await req.formData();
+    
+    const title = formData.get('title') as string;
+    const titleAr = formData.get('titleAr') as string;
+    const description = formData.get('description') as string;
+    const descriptionAr = formData.get('descriptionAr') as string;
+    const price = formData.get('price') ? parseFloat(formData.get('price') as string) : undefined;
+    const priceAfterDiscount = formData.get('priceAfterDiscount') 
+      ? parseFloat(formData.get('priceAfterDiscount') as string) 
+      : undefined;
+    const quantity = formData.get('quantity') ? parseInt(formData.get('quantity') as string) : undefined;
+    const category = formData.get('category') as string;
+    const brand = formData.get('brand') as string;
+    const colors = formData.getAll('colors[]') as string[];
+    const sizes = formData.getAll('sizes[]') as string[];
+
+    const updateData: any = {};
+    if (title) updateData.title = title;
+    if (titleAr) updateData.titleAr = titleAr;
+    if (description) updateData.description = description;
+    if (descriptionAr) updateData.descriptionAr = descriptionAr;
+    if (price !== undefined) updateData.price = price;
+    if (priceAfterDiscount !== undefined) updateData.priceAfterDiscount = priceAfterDiscount;
+    if (quantity !== undefined) updateData.quantity = quantity;
+    if (category) updateData.category = category;
+    if (brand) updateData.brand = brand;
+    if (colors.length > 0) updateData.colors = colors;
+    if (sizes.length > 0) updateData.sizes = sizes;
+
+    const product = await Product.findByIdAndUpdate(params.id, updateData, {
       new: true,
       runValidators: true,
     })
@@ -57,7 +85,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json(
       {
         message: 'Product updated successfully',
-        product,
+        data: product,
       },
       { status: 200 }
     );

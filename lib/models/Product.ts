@@ -1,28 +1,37 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IProduct extends Document {
-  name: string;
+  title: string;
+  titleAr: string;
   slug: string;
   description: string;
+  descriptionAr: string;
   price: number;
-  discountPrice?: number;
-  image: string;
+  priceAfterDiscount?: number;
+  imageCover: string;
   images: string[];
+  colors?: string[];
+  sizes?: string[];
   category: mongoose.Types.ObjectId;
   brand: mongoose.Types.ObjectId;
-  stock: number;
-  rating: number;
+  quantity: number;
+  sold: number;
+  ratingsAverage: number;
+  ratingsQuantity: number;
   reviews: mongoose.Types.ObjectId[];
-  isFeatured: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const productSchema = new Schema<IProduct>(
   {
-    name: {
+    title: {
       type: String,
-      required: [true, 'Please provide a product name'],
+      required: [true, 'Please provide a product title'],
+      trim: true,
+    },
+    titleAr: {
+      type: String,
       trim: true,
     },
     slug: {
@@ -34,16 +43,21 @@ const productSchema = new Schema<IProduct>(
       type: String,
       required: true,
     },
+    descriptionAr: {
+      type: String,
+    },
     price: {
       type: Number,
       required: [true, 'Please provide a price'],
     },
-    discountPrice: Number,
-    image: {
+    priceAfterDiscount: Number,
+    imageCover: {
       type: String,
       required: true,
     },
     images: [String],
+    colors: [String],
+    sizes: [String],
     category: {
       type: Schema.Types.ObjectId,
       ref: 'Category',
@@ -53,15 +67,23 @@ const productSchema = new Schema<IProduct>(
       type: Schema.Types.ObjectId,
       ref: 'Brand',
     },
-    stock: {
+    quantity: {
       type: Number,
       default: 0,
     },
-    rating: {
+    sold: {
+      type: Number,
+      default: 0,
+    },
+    ratingsAverage: {
       type: Number,
       default: 0,
       min: 0,
       max: 5,
+    },
+    ratingsQuantity: {
+      type: Number,
+      default: 0,
     },
     reviews: [
       {
@@ -69,20 +91,16 @@ const productSchema = new Schema<IProduct>(
         ref: 'Review',
       },
     ],
-    isFeatured: {
-      type: Boolean,
-      default: false,
-    },
   },
   { timestamps: true }
 );
 
-// Generate slug from name
+// Generate slug from title - supports Arabic characters
 productSchema.pre('save', function (next) {
   if (!this.slug) {
-    this.slug = this.name
+    this.slug = this.title
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
+      .replace(/[^\w\s\u0600-\u06FF-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
   }

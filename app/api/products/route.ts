@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
 
     if (search) {
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
+        { title: { $regex: search, $options: 'i' } },
+        { titleAr: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
       ];
     }
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        products,
+        data: products,
         pagination: {
           page,
           limit,
@@ -77,19 +78,57 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
-    const body = await req.json();
-    const { name, description, price, discountPrice, image, images, category, brand, stock } = body;
+    const formData = await req.formData();
+    
+    const title = formData.get('title') as string;
+    const titleAr = formData.get('titleAr') as string || title;
+    const description = formData.get('description') as string;
+    const descriptionAr = formData.get('descriptionAr') as string || description;
+    const price = parseFloat(formData.get('price') as string);
+    const priceAfterDiscount = formData.get('priceAfterDiscount') 
+      ? parseFloat(formData.get('priceAfterDiscount') as string) 
+      : undefined;
+    const imageCover = formData.get('imageCover') as File;
+    const quantity = parseInt(formData.get('quantity') as string) || 0;
+    const category = formData.get('category') as string;
+    const brand = formData.get('brand') as string;
+    
+    // Get colors and sizes arrays
+    const colors = formData.getAll('colors[]') as string[];
+    const sizes = formData.getAll('sizes[]') as string[];
+    const imagesFiles = formData.getAll('images') as File[];
+
+    // TODO: Upload imageCover to Cloudinary and get URL
+    let imageCoverUrl = '';
+    if (imageCover) {
+      // await uploadToCloudinary(imageCover)
+      imageCoverUrl = '/placeholder.jpg'; // Placeholder for now
+    }
+
+    // TODO: Upload additional images to Cloudinary
+    const imageUrls: string[] = [];
+    // for (const img of imagesFiles) {
+    //   const url = await uploadToCloudinary(img);
+    //   imageUrls.push(url);
+    // }
 
     const product = new Product({
-      name,
+      title,
+      titleAr,
       description,
+      descriptionAr,
       price,
-      discountPrice,
-      image,
-      images,
+      priceAfterDiscount,
+      imageCover: imageCoverUrl,
+      images: imageUrls,
+      colors,
+      sizes,
       category,
       brand,
-      stock,
+      quantity,
+      sold: 0,
+      ratingsAverage: 0,
+      ratingsQuantity: 0,
     });
 
     await product.save();
@@ -99,7 +138,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Product created successfully',
-        product,
+        data: product,
       },
       { status: 201 }
     );

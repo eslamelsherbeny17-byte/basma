@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
+        results: total,
         data: products,
         pagination: {
           page,
@@ -96,38 +97,59 @@ export async function POST(req: NextRequest) {
     const category = formData.get('category') as string;
     const brand = formData.get('brand') as string;
     
-    // Get colors and sizes arrays
+    // Validate required fields
+    if (!title?.trim() || !description?.trim() || !price || !category?.trim()) {
+      return NextResponse.json(
+        { message: 'Missing required fields: title, description, price, category' },
+        { status: 400 }
+      );
+    }
+
     const colors = formData.getAll('colors[]') as string[];
     const sizes = formData.getAll('sizes[]') as string[];
     const imagesFiles = formData.getAll('images') as File[];
 
-    // Upload imageCover to Cloudinary
     let imageCoverUrl = '';
-    if (imageCover) {
-      imageCoverUrl = await uploadToCloudinary(imageCover);
+    if (imageCover instanceof File && imageCover.size > 0) {
+      try {
+        imageCoverUrl = await uploadToCloudinary(imageCover);
+      } catch (err) {
+        console.error('[v0] Image upload failed:', err);
+        return NextResponse.json(
+          { message: 'Failed to upload cover image' },
+          { status: 400 }
+        );
+      }
     }
 
-    // Upload additional images to Cloudinary
     const imageUrls: string[] = [];
-    for (const img of imagesFiles) {
-      const url = await uploadToCloudinary(img as File);
-      imageUrls.push(url);
+    if (imagesFiles && imagesFiles.length > 0) {
+      for (const img of imagesFiles) {
+        if (img instanceof File && img.size > 0) {
+          try {
+            const url = await uploadToCloudinary(img);
+            imageUrls.push(url);
+          } catch (err) {
+            console.error('[v0] Additional image upload failed:', err);
+          }
+        }
+      }
     }
 
     const product = new Product({
-      title,
-      titleAr,
-      description,
-      descriptionAr,
-      price,
-      priceAfterDiscount,
-      imageCover: imageCoverUrl,
+      title: title.trim(),
+      titleAr: (titleAr || title).trim(),
+      description: description.trim(),
+      descriptionAr: (descriptionAr || description).trim(),
+      price: Number(price),
+      priceAfterDiscount: priceAfterDiscount ? Number(priceAfterDiscount) : undefined,
+      imageCover: imageCoverUrl || 'https://via.placeholder.com/500',
       images: imageUrls,
-      colors,
-      sizes,
+      colors: colors.filter(c => c?.trim()),
+      sizes: sizes.filter(s => s?.trim()),
       category,
-      brand,
-      quantity,
+      brand: brand || undefined,
+      quantity: Math.max(0, quantity || 0),
       sold: 0,
       ratingsAverage: 0,
       ratingsQuantity: 0,

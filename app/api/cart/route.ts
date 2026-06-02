@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       await cart.save();
     }
 
-    return NextResponse.json({ cart }, { status: 200 });
+    return NextResponse.json({ data: cart }, { status: 200 });
   } catch (error) {
     console.error('Cart fetch error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Item added to cart',
-        cart,
+        data: cart,
       },
       { status: 200 }
     );
@@ -133,7 +133,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Cart updated',
-        cart,
+        data: cart,
       },
       { status: 200 }
     );

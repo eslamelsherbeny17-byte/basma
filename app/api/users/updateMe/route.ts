@@ -3,47 +3,6 @@ import dbConnect from '@/lib/db';
 import User from '@/lib/models/User';
 import { getTokenFromRequest, verifyToken } from '@/lib/middleware';
 
-export async function GET(req: NextRequest) {
-  try {
-    await dbConnect();
-
-    const token = getTokenFromRequest(req);
-
-    if (!token) {
-      return NextResponse.json({ message: 'No token provided' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
-    }
-
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(
-      {
-        data: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          avatar: user.avatar,
-          role: user.role,
-        },
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Profile error:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
-  }
-}
-
 export async function PUT(req: NextRequest) {
   try {
     await dbConnect();
@@ -63,9 +22,14 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { name, phone, avatar } = body;
 
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
+    if (avatar) updateData.avatar = avatar;
+
     const user = await User.findByIdAndUpdate(
       decoded.userId,
-      { name, phone, avatar },
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -75,20 +39,20 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'Profile updated successfully',
+        status: 'success',
         data: {
           id: user._id,
           name: user.name,
           email: user.email,
-          phone: user.phone,
-          avatar: user.avatar,
+          phone: user.phone || '',
+          avatar: user.avatar || '',
           role: user.role,
         },
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Profile update error:', error);
+    console.error('Update user error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

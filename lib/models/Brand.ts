@@ -29,7 +29,7 @@ const brandSchema = new Schema<IBrand>(
 );
 
 // Generate slug from name
-brandSchema.pre('save', function (next) {
+brandSchema.pre('save', function () {
   if (!this.slug) {
     this.slug = this.name
       .toLowerCase()
@@ -37,7 +37,6 @@ brandSchema.pre('save', function (next) {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
   }
-  next();
 });
 
 export default mongoose.models.Brand || mongoose.model<IBrand>('Brand', brandSchema);

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
     const addresses = await Address.find({ user: decoded.userId }).sort('-createdAt');
 
-    return NextResponse.json({ addresses }, { status: 200 });
+    return NextResponse.json({ data: addresses }, { status: 200 });
   } catch (error) {
     console.error('Addresses fetch error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Address created successfully',
-        address: newAddress,
+        data: newAddress,
       },
       { status: 201 }
     );

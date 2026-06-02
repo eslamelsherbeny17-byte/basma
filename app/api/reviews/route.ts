@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        reviews,
+        data: reviews,
         pagination: {
           page,
           limit,
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Review created successfully',
-        review,
+        data: review,
       },
       { status: 201 }
     );

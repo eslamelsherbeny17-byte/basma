@@ -29,7 +29,7 @@ const categorySchema = new Schema<ICategory>(
 );
 
 // Generate slug from name
-categorySchema.pre('save', function (next) {
+categorySchema.pre('save', function () {
   if (!this.slug) {
     this.slug = this.name
       .toLowerCase()
@@ -37,7 +37,6 @@ categorySchema.pre('save', function (next) {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
   }
-  next();
 });
 
 export default mongoose.models.Category || mongoose.model<ICategory>('Category', categorySchema);

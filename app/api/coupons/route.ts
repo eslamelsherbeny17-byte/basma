@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     const coupons = await Coupon.find(query);
 
-    return NextResponse.json({ coupons }, { status: 200 });
+    return NextResponse.json({ data: coupons }, { status: 200 });
   } catch (error) {
     console.error('Coupons fetch error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Coupon created successfully',
-        coupon,
+        data: coupon,
       },
       { status: 201 }
     );

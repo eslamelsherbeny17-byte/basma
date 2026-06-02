@@ -49,11 +49,10 @@ const cartSchema = new Schema<ICart>(
 );
 
 // Calculate total price
-cartSchema.pre('save', function (next) {
+cartSchema.pre('save', function () {
   this.totalPrice = this.items.reduce((total, item) => {
     return total + item.price * item.quantity;
   }, 0);
-  next();
 });
 
 export default mongoose.models.Cart || mongoose.model<ICart>('Cart', cartSchema);

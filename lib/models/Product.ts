@@ -96,7 +96,7 @@ const productSchema = new Schema<IProduct>(
 );
 
 // Generate slug from title - supports Arabic characters
-productSchema.pre('save', function (next) {
+productSchema.pre('save', function () {
   if (!this.slug) {
     this.slug = this.title
       .toLowerCase()
@@ -104,7 +104,6 @@ productSchema.pre('save', function (next) {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
   }
-  next();
 });
 
 export default mongoose.models.Product || mongoose.model<IProduct>('Product', productSchema);

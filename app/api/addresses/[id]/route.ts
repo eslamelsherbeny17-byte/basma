@@ -48,7 +48,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json(
       {
         message: 'Address updated successfully',
-        address: updatedAddress,
+        data: updatedAddress,
       },
       { status: 200 }
     );

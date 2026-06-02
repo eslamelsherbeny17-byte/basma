@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       await wishlist.save();
     }
 
-    return NextResponse.json({ wishlist }, { status: 200 });
+    return NextResponse.json({ data: wishlist }, { status: 200 });
   } catch (error) {
     console.error('Wishlist fetch error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Product added to wishlist',
-        wishlist,
+        data: wishlist,
       },
       { status: 200 }
     );
@@ -123,7 +123,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'Product removed from wishlist',
-        wishlist,
+        data: wishlist,
       },
       { status: 200 }
     );

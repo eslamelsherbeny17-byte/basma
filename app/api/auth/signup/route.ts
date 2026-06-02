@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: 'User created successfully',
-        user: {
+        data: {
           id: user._id,
           name: user.name,
           email: user.email,

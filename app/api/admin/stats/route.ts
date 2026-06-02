@@ -53,14 +53,16 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        stats: {
-          totalOrders,
-          totalRevenue,
-          totalUsers,
-          totalProducts,
-          ordersByStatus,
+        data: {
+          stats: {
+            totalOrders,
+            totalRevenue,
+            totalUsers,
+            totalProducts,
+            ordersByStatus,
+          },
+          recentOrders,
         },
-        recentOrders,
       },
       { status: 200 }
     );

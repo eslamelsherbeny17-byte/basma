@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Brand from '@/lib/models/Brand';
 import { getTokenFromRequest, verifyToken } from '@/lib/middleware';
+import { uploadToCloudinary } from '@/lib/uploadToCloudinary';
 
 export async function GET(req: NextRequest) {
   try {
@@ -37,11 +38,11 @@ export async function POST(req: NextRequest) {
     const description = formData.get('description') as string;
     const image = formData.get('image') as File;
 
-    // TODO: Upload image to Cloudinary
+    // Upload image to Cloudinary
     let imageUrl = '';
-    // if (image) {
-    //   imageUrl = await uploadToCloudinary(image);
-    // }
+    if (image) {
+      imageUrl = await uploadToCloudinary(image);
+    }
 
     const brand = new Brand({
       name,

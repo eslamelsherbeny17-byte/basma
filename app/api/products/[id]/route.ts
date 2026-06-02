@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/lib/models/Product';
 import { getTokenFromRequest, verifyToken } from '@/lib/middleware';
+import { uploadToCloudinary } from '@/lib/uploadToCloudinary';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -52,11 +53,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const priceAfterDiscount = formData.get('priceAfterDiscount') 
       ? parseFloat(formData.get('priceAfterDiscount') as string) 
       : undefined;
+    const imageCover = formData.get('imageCover') as File;
     const quantity = formData.get('quantity') ? parseInt(formData.get('quantity') as string) : undefined;
     const category = formData.get('category') as string;
     const brand = formData.get('brand') as string;
     const colors = formData.getAll('colors[]') as string[];
     const sizes = formData.getAll('sizes[]') as string[];
+    const imagesFiles = formData.getAll('images') as File[];
 
     const updateData: any = {};
     if (title) updateData.title = title;
@@ -70,6 +73,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (brand) updateData.brand = brand;
     if (colors.length > 0) updateData.colors = colors;
     if (sizes.length > 0) updateData.sizes = sizes;
+
+    // Upload new imageCover to Cloudinary if provided
+    if (imageCover) {
+      updateData.imageCover = await uploadToCloudinary(imageCover);
+    }
+
+    // Upload new images to Cloudinary if provided
+    if (imagesFiles.length > 0) {
+      const imageUrls: string[] = [];
+      for (const img of imagesFiles) {
+        const url = await uploadToCloudinary(img as File);
+        imageUrls.push(url);
+      }
+      updateData.images = imageUrls;
+    }
 
     const product = await Product.findByIdAndUpdate(params.id, updateData, {
       new: true,

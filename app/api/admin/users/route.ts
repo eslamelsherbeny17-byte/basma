@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        users,
+        data: users,
         pagination: {
           page,
           limit,

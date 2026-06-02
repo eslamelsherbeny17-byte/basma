@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/lib/models/Product';
 import { getTokenFromRequest, verifyToken } from '@/lib/middleware';
+import { uploadToCloudinary } from '@/lib/uploadToCloudinary';
 
 export async function GET(req: NextRequest) {
   try {
@@ -98,19 +99,18 @@ export async function POST(req: NextRequest) {
     const sizes = formData.getAll('sizes[]') as string[];
     const imagesFiles = formData.getAll('images') as File[];
 
-    // TODO: Upload imageCover to Cloudinary and get URL
+    // Upload imageCover to Cloudinary
     let imageCoverUrl = '';
     if (imageCover) {
-      // await uploadToCloudinary(imageCover)
-      imageCoverUrl = '/placeholder.jpg'; // Placeholder for now
+      imageCoverUrl = await uploadToCloudinary(imageCover);
     }
 
-    // TODO: Upload additional images to Cloudinary
+    // Upload additional images to Cloudinary
     const imageUrls: string[] = [];
-    // for (const img of imagesFiles) {
-    //   const url = await uploadToCloudinary(img);
-    //   imageUrls.push(url);
-    // }
+    for (const img of imagesFiles) {
+      const url = await uploadToCloudinary(img as File);
+      imageUrls.push(url);
+    }
 
     const product = new Product({
       title,

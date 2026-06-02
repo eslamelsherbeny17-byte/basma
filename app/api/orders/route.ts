@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/lib/models/Order';
 import Cart from '@/lib/models/Cart';
+import Product from '@/lib/models/Product';
 import { getTokenFromRequest, verifyToken } from '@/lib/middleware';
 
 export async function GET(req: NextRequest) {

@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Admin dashboard stats error:', error);
+    console.error('Admin stats error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

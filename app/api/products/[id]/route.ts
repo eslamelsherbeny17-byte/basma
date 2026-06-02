@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/lib/models/Product';
+import Category from '@/lib/models/Category';
+import Brand from '@/lib/models/Brand';
 import { getTokenFromRequest, verifyToken } from '@/lib/middleware';
 import { uploadToCloudinary } from '@/lib/uploadToCloudinary';
 
